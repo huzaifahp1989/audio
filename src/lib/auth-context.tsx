@@ -315,8 +315,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       setLoading(true);
-      await refreshProfile();
-      setLoading(false);
+      // Safety timeout — never stay stuck loading for more than 5 seconds
+      const safetyTimer = setTimeout(() => setLoading(false), 5000);
+      try {
+        await refreshProfile();
+      } finally {
+        clearTimeout(safetyTimer);
+        setLoading(false);
+      }
     })();
   }, [user, refreshProfile]);
 

@@ -117,7 +117,7 @@ export default function SignInPage() {
     try { window.localStorage.setItem('iklp_remember_me', val ? 'true' : 'false'); } catch {}
   };
 
-  const waitForSession = async (attempts = 12, delayMs = 250) => {
+  const waitForSession = async (attempts = 6, delayMs = 200) => {
     for (let i = 0; i < attempts; i++) {
       const { data } = await supabase.auth.getSession();
       if (data.session?.user?.id) return data.session;
@@ -267,7 +267,6 @@ export default function SignInPage() {
               const needsMfa = await beginMfaIfNeeded();
               if (needsMfa) { setInfo('Enter your 2FA code to continue.'); return; }
               setInfo('Signed in! Redirecting…');
-              await new Promise((r) => setTimeout(r, 400));
               router.replace(getNextPath());
               return;
             }
@@ -310,9 +309,6 @@ export default function SignInPage() {
       if (needsMfa) { setInfo('Enter your 2FA code to continue.'); return; }
 
       setInfo('Signed in! Redirecting…');
-      // Small delay to let the auth context process the SIGNED_IN event and load the profile
-      // before navigating, preventing a flash of "Sign In" buttons on the destination page
-      await new Promise((r) => setTimeout(r, 400));
       router.replace(getNextPath());
     } catch (err: any) {
       recordFailedAttempt();
