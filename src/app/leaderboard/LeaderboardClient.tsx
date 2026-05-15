@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
-import { Trophy, RefreshCw, Crown, Medal, Award, Sparkles, Star } from 'lucide-react';
+import { Trophy, Crown, Medal, Award, Sparkles, Star } from 'lucide-react';
 
 type Entry = {
   uid: string;
@@ -23,10 +23,9 @@ type Entry = {
 const POLICY_POPUP_KEY = 'leaderboard_policy_popup_v1';
 
 export default function LeaderboardClient() {
-  const [activeTab, setActiveTab] = useState<'weekly' | 'monthly'>('weekly');
+  const activeTab: 'weekly' = 'weekly';
   const [entries, setEntries] = useState<Entry[]>([]);
   const [weeklyChallenge, setWeeklyChallenge] = useState<{ remaining: number; qualifiedForDraw: boolean } | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showPolicyPopup, setShowPolicyPopup] = useState(false);
   const [popupMounted, setPopupMounted] = useState(false);
@@ -112,26 +111,20 @@ export default function LeaderboardClient() {
     };
   }, [loadLeaderboard]);
 
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await loadLeaderboard({ soft: true });
-    setRefreshing(false);
-  };
-
   const leaderboardData = useMemo(() => {
     return entries.map((entry, index) => ({
       rank: index + 1,
       username: entry.name,
       madrasahName: entry.madrasahName || '',
       level: entry.level,
-      points: activeTab === 'weekly' ? (entry.weeklyPoints ?? 0) : (entry.monthlyPoints ?? 0),
+      points: entry.weeklyPoints ?? 0,
       uid: entry.uid,
       badges: entry.badges ?? 0,
       lastPlayedDate: entry.lastPlayedDate ?? null,
       winnerTick: entry.winnerTick ?? false,
       weeklyChallengeDone: entry.weeklyChallengeDone ?? false,
     }));
-  }, [entries, activeTab]);
+  }, [entries]);
 
   const formatPlayedDate = (isoDate: string | null | undefined) => {
     if (!isoDate) return null;
@@ -192,7 +185,7 @@ export default function LeaderboardClient() {
             <span className="text-sm font-semibold text-[#b45309]">Competition Leaderboard</span>
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-[#6a422d]">Leaderboard</h1>
-          <p className="text-[#a1633a] text-lg">See who is leading this week and month</p>
+          <p className="text-[#a1633a] text-lg">See who is leading this week</p>
         </div>
 
         <div className="bg-gradient-to-r from-[#ecfeff] to-[#f0fdfa] border border-[#14b8a6]/30 rounded-2xl p-5 text-center">
@@ -202,36 +195,6 @@ export default function LeaderboardClient() {
           <p className="text-[#115e59] mt-2 text-sm md:text-base">
             Please continue taking part every day to win prizes.
           </p>
-        </div>
-
-        <div className="flex gap-3 justify-center">
-          <button
-            onClick={() => setActiveTab('weekly')}
-            className={`px-6 py-3 rounded-xl font-bold transition-all ${
-              activeTab === 'weekly'
-                ? 'bg-gradient-to-r from-[#14b8a6] to-[#0d9488] text-white shadow-lg'
-                : 'bg-white text-[#6a422d] border border-[#e5c9a3]/30 hover:bg-[#f0fdfa]'
-            }`}
-          >
-            Weekly
-          </button>
-          <button
-            onClick={() => setActiveTab('monthly')}
-            className={`px-6 py-3 rounded-xl font-bold transition-all ${
-              activeTab === 'monthly'
-                ? 'bg-gradient-to-r from-[#14b8a6] to-[#0d9488] text-white shadow-lg'
-                : 'bg-white text-[#6a422d] border border-[#e5c9a3]/30 hover:bg-[#f0fdfa]'
-            }`}
-          >
-            Monthly
-          </button>
-          <button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="px-6 py-3 rounded-xl font-bold bg-white text-[#6a422d] border border-[#e5c9a3]/30 hover:bg-[#f9f0e6] transition-all disabled:opacity-50"
-          >
-            <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
-          </button>
         </div>
 
         <div className="text-center">
@@ -245,7 +208,7 @@ export default function LeaderboardClient() {
           </a>
         </div>
 
-        {activeTab === 'weekly' && weeklyChallenge ? (
+        {weeklyChallenge ? (
           <div className={`rounded-2xl border p-5 text-center ${weeklyChallenge.qualifiedForDraw ? 'border-amber-200 bg-amber-50' : 'border-teal-200 bg-teal-50'}`}>
             <p className="font-bold text-base md:text-lg text-[#6a422d]">
               {weeklyChallenge.qualifiedForDraw
@@ -273,29 +236,10 @@ export default function LeaderboardClient() {
         )}
 
         {!loading && leaderboardData.length > 0 && (
-          <div className="grid grid-cols-3 gap-2 sm:gap-4">
-            {leaderboardData.slice(0, 3).map((entry) => (
-              <div key={entry.rank} className={`${getRankStyle(entry.rank)} rounded-2xl p-3 sm:p-6 text-center shadow-lg ${entry.rank === 1 ? 'scale-105' : ''}`}>
-                <div className="flex justify-center mb-3">{getRankIcon(entry.rank)}</div>
-                <p className="text-xs sm:text-sm md:text-base font-bold truncate inline-flex items-center justify-center gap-2 leading-tight">
-                  <span className="truncate">{entry.username}</span>
-                  {entry.winnerTick ? <span aria-label="Winner" className="text-white/90">✓</span> : null}
-                  {entry.weeklyChallengeDone && activeTab === 'weekly' ? <span aria-label="Weekly challenge complete" className="text-white/90">⭐</span> : null}
-                </p>
-                <p className="text-xs opacity-90 truncate">{entry.madrasahName || ''}</p>
-                {formatPlayedDate(entry.lastPlayedDate) ? <p className="text-xs opacity-90 mt-1">Played: {formatPlayedDate(entry.lastPlayedDate)}</p> : null}
-                <p className="text-lg sm:text-2xl font-bold">{entry.points}</p>
-                <p className="text-xs sm:text-sm opacity-80">{entry.badges} badges</p>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {!loading && leaderboardData.length > 0 && (
           <div className="bg-white rounded-2xl shadow-lg border border-[#e5c9a3]/30 overflow-hidden">
             <div className="p-6 bg-gradient-to-r from-[#14b8a6] to-[#0d9488] text-white">
-              <h2 className="text-xl font-bold">{activeTab === 'weekly' ? 'Weekly Rankings' : 'Monthly Rankings'}</h2>
-              <p className="text-sm text-white/80">{activeTab === 'weekly' ? 'Reset manually by admin' : 'Resets 1st of each month'}</p>
+              <h2 className="text-xl font-bold">Weekly Rankings</h2>
+              <p className="text-sm text-white/80">Reset manually by admin</p>
             </div>
 
             <div className="divide-y divide-[#e5c9a3]/20">
@@ -312,9 +256,9 @@ export default function LeaderboardClient() {
                     <p className="font-bold text-[#6a422d] inline-flex items-center gap-2">
                       <span>{entry.username}</span>
                       {entry.winnerTick ? <span aria-label="Winner" className="text-emerald-600">✓</span> : null}
-                      {entry.weeklyChallengeDone && activeTab === 'weekly' ? <span aria-label="Weekly challenge complete" className="text-amber-500">⭐</span> : null}
+                      {entry.weeklyChallengeDone ? <span aria-label="Weekly challenge complete" className="text-amber-500">⭐</span> : null}
                     </p>
-                    {!entry.weeklyChallengeDone && activeTab === 'weekly' ? (
+                    {!entry.weeklyChallengeDone ? (
                       <p className="text-xs text-[#0f766e]">To get a star and to enter prize draw stay active and get 300 points weekly.</p>
                     ) : null}
                     <p className="text-xs text-[#a1633a]">Madrasah: {entry.madrasahName || ''}</p>
@@ -350,7 +294,7 @@ export default function LeaderboardClient() {
             <div className="bg-white/10 rounded-xl p-4 text-center">
               <p className="text-sm text-white/80 mb-1">Your Points</p>
               <p className="text-3xl font-bold">
-                {profile?.uid ? (activeTab === 'weekly' ? (profile?.weeklyPoints ?? profile?.points ?? 0) : (profile?.monthlyPoints ?? profile?.points ?? 0)) : '—'}
+                {profile?.uid ? (profile?.weeklyPoints ?? profile?.points ?? 0) : '—'}
               </p>
             </div>
           </div>
