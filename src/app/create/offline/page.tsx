@@ -4,6 +4,7 @@ import React, { useMemo, useRef, useState } from 'react';
 import { Download, Printer } from 'lucide-react';
 import { CreateShell } from '@/components/CreateShell';
 import { ClaimCreatePointsButton } from '@/components/ClaimCreatePointsButton';
+import { FadeUp, Stagger, StaggerItem } from '@/components/Motion';
 import {
   OFFLINE_ACTIVITIES,
   OFFLINE_COLOURING_SVGS,
@@ -252,44 +253,51 @@ export default function OfflineActivitiesPage() {
 
   return (
     <CreateShell title="Offline Activities">
-      <p className="no-print text-sm text-sand-600">
-        Print or download worksheets to use without a screen — colouring, checklists, tracing, mazes, and dua
-        cards. Ask a parent to help print!
-      </p>
+      <FadeUp>
+        <p className="no-print text-sm text-sand-600">
+          Print or download worksheets to use without a screen — colouring, checklists, tracing, mazes, and dua
+          cards. Ask a parent to help print!
+        </p>
+      </FadeUp>
 
-      <div className="no-print grid gap-2 sm:grid-cols-2">
+      <Stagger className="no-print grid gap-2 sm:grid-cols-2" delayChildren={0.08}>
         {OFFLINE_ACTIVITIES.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() => setSelectedId(item.id)}
-            className={`rounded-2xl border-2 px-4 py-3 text-left transition ${
-              selectedId === item.id
-                ? 'border-teal-500 bg-teal-50'
-                : 'border-sand-200 bg-white hover:border-teal-200'
-            }`}
-          >
-            <span className="text-2xl" aria-hidden>
-              {item.emoji}
-            </span>
-            <p className="mt-1 font-extrabold text-sand-900">{item.title}</p>
-            <p className="text-xs text-sand-600">{item.blurb}</p>
-            <p className="mt-1 text-[11px] font-bold uppercase tracking-wide text-teal-700">
-              {item.ages} · {item.minutes}
-            </p>
-          </button>
+          <StaggerItem key={item.id}>
+            <button
+              type="button"
+              onClick={() => setSelectedId(item.id)}
+              className={`w-full rounded-2xl border-2 px-4 py-3 text-left transition ${
+                selectedId === item.id
+                  ? 'border-teal-500 bg-teal-50'
+                  : 'border-sand-200 bg-white hover:border-teal-200'
+              }`}
+            >
+              <span className="text-2xl" aria-hidden>
+                {item.emoji}
+              </span>
+              <p className="mt-1 font-extrabold text-sand-900">{item.title}</p>
+              <p className="text-xs text-sand-600">{item.blurb}</p>
+              <p className="mt-1 text-[11px] font-bold uppercase tracking-wide text-teal-700">
+                {item.ages} · {item.minutes}
+              </p>
+            </button>
+          </StaggerItem>
         ))}
-      </div>
+      </Stagger>
 
-      <PrintActions
-        onPrint={handlePrint}
-        onDownload={() => downloadForActivity(activity)}
-        downloadLabel={canDownloadSvg ? 'Download SVG' : 'Download text sheet'}
-      />
+      <FadeUp delay={0.12}>
+        <PrintActions
+          onPrint={handlePrint}
+          onDownload={() => downloadForActivity(activity)}
+          downloadLabel={canDownloadSvg ? 'Download SVG' : 'Download text sheet'}
+        />
+      </FadeUp>
 
-      <div ref={printRef} className="print-area">
-        <ActivityPreview activity={activity} />
-      </div>
+      <FadeUp delay={0.16}>
+        <div ref={printRef} className="print-area">
+          <ActivityPreview activity={activity} />
+        </div>
+      </FadeUp>
 
       <div className="no-print">
         <ClaimCreatePointsButton

@@ -1,6 +1,9 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
 import { ReadAloudButton } from '@/components/ReadAloudButton';
+import { FadeUp, Reveal, Stagger, StaggerItem } from '@/components/Motion';
 import {
   ACTIVITY_BONUS_POINTS,
   DAILY_EARNING_PLAN,
@@ -191,7 +194,7 @@ export default function GuidePage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#fff9eb] via-white to-[#f0fdfa] px-4 py-10">
       <div className="mx-auto w-full max-w-4xl">
-        <div className="mb-8 rounded-3xl border border-[#0d9488]/15 bg-white/90 p-6 shadow-xl backdrop-blur sm:p-8">
+        <FadeUp className="mb-8 rounded-3xl border border-[#0d9488]/15 bg-white/90 p-6 shadow-xl backdrop-blur sm:p-8">
           <div className="inline-flex items-center gap-2 rounded-full bg-[#f0fdfa] px-3 py-1 text-xs font-extrabold text-[#0f766e]">
             <Sparkles size={14} />
             Points Guide
@@ -208,26 +211,32 @@ export default function GuidePage() {
             Your points help you win badges and climb the leaderboard.
           </p>
 
-          <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl border border-violet-200 bg-violet-50 p-4 text-center">
-              <p className="text-xs font-bold uppercase text-violet-700">Daily maximum</p>
-              <p className="mt-1 text-3xl font-black text-violet-900">{POINTS_DAILY_CAP}</p>
-              <p className="text-xs text-violet-700">points per day</p>
-            </div>
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-center">
-              <p className="text-xs font-bold uppercase text-amber-700">From quizzes</p>
-              <p className="mt-1 text-3xl font-black text-amber-900">{MAX_DAILY_QUIZ_POINTS}</p>
-              <p className="text-xs text-amber-700">{MAX_DAILY_QUIZ_ATTEMPTS} × {QUIZ_POINTS_PER_COMPLETION} pts</p>
-            </div>
-            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-center">
-              <p className="text-xs font-bold uppercase text-emerald-700">Daily plan total</p>
-              <p className="mt-1 text-3xl font-black text-emerald-900">{DAILY_PLAN_TOTAL_POINTS}</p>
-              <p className="text-xs text-emerald-700">plan activities (cap {POINTS_DAILY_CAP})</p>
-            </div>
-          </div>
-        </div>
+          <Stagger className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3" delayChildren={0.12}>
+            <StaggerItem>
+              <div className="rounded-2xl border border-violet-200 bg-violet-50 p-4 text-center">
+                <p className="text-xs font-bold uppercase text-violet-700">Daily maximum</p>
+                <p className="mt-1 text-3xl font-black text-violet-900">{POINTS_DAILY_CAP}</p>
+                <p className="text-xs text-violet-700">points per day</p>
+              </div>
+            </StaggerItem>
+            <StaggerItem>
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-center">
+                <p className="text-xs font-bold uppercase text-amber-700">From quizzes</p>
+                <p className="mt-1 text-3xl font-black text-amber-900">{MAX_DAILY_QUIZ_POINTS}</p>
+                <p className="text-xs text-amber-700">{MAX_DAILY_QUIZ_ATTEMPTS} × {QUIZ_POINTS_PER_COMPLETION} pts</p>
+              </div>
+            </StaggerItem>
+            <StaggerItem>
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-center">
+                <p className="text-xs font-bold uppercase text-emerald-700">Daily plan total</p>
+                <p className="mt-1 text-3xl font-black text-emerald-900">{DAILY_PLAN_TOTAL_POINTS}</p>
+                <p className="text-xs text-emerald-700">plan activities (cap {POINTS_DAILY_CAP})</p>
+              </div>
+            </StaggerItem>
+          </Stagger>
+        </FadeUp>
 
-        <div className="mb-6 rounded-3xl border border-violet-200 bg-violet-50 p-6 shadow-lg">
+        <Reveal className="mb-6 rounded-3xl border border-violet-200 bg-violet-50 p-6 shadow-lg">
           <div className="mb-3 inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-violet-700">
             <Sparkles size={20} />
           </div>
@@ -253,9 +262,9 @@ export default function GuidePage() {
               </ul>
             </div>
           </div>
-        </div>
+        </Reveal>
 
-        <div className="mb-6 rounded-3xl border border-amber-200 bg-amber-50 p-6 shadow-lg">
+        <Reveal className="mb-6 rounded-3xl border border-amber-200 bg-amber-50 p-6 shadow-lg" delay={0.05}>
           <div className="mb-3 inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-amber-700">
             <Gift size={20} />
           </div>
@@ -266,9 +275,9 @@ export default function GuidePage() {
             <li>Keep the family streak alive by finishing daily missions (siblings share the streak).</li>
             <li>Come back tomorrow for fresh quiz slots, game points, and another story mini-quiz.</li>
           </ul>
-        </div>
+        </Reveal>
 
-        <div className="mb-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-lg">
+        <Reveal className="mb-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-lg">
           <div className="mb-4 flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#f0fdfa] text-[#0f766e]">
               <Zap size={20} />
@@ -292,33 +301,35 @@ export default function GuidePage() {
           <p className="mt-4 text-sm font-semibold text-slate-600">
             Total: {DAILY_PLAN_TOTAL_POINTS} points per day. Watch the daily bar on every page to track your progress.
           </p>
-        </div>
+        </Reveal>
 
-        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Stagger className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2" delayChildren={0.08}>
           {earningActivities.map((activity) => (
-            <div key={activity.title} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg">
-              <div className="mb-3 flex items-start justify-between gap-2">
-                <span className="text-3xl">{activity.emoji}</span>
-                <span
-                  className={`rounded-full bg-gradient-to-r ${activity.color} px-3 py-1 text-xs font-black text-white`}
+            <StaggerItem key={activity.title}>
+              <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg h-full">
+                <div className="mb-3 flex items-start justify-between gap-2">
+                  <span className="text-3xl">{activity.emoji}</span>
+                  <span
+                    className={`rounded-full bg-gradient-to-r ${activity.color} px-3 py-1 text-xs font-black text-white`}
+                  >
+                    {activity.points}
+                  </span>
+                </div>
+                <h3 className="text-lg font-extrabold text-slate-900">{activity.title}</h3>
+                <p className="mt-1 text-xs font-semibold text-slate-500">{activity.limit}</p>
+                <p className="mt-2 text-sm text-slate-700">{activity.description}</p>
+                <Link
+                  href={activity.href}
+                  className="mt-4 inline-flex rounded-xl bg-[#f0fdfa] px-4 py-2 text-sm font-bold text-[#0f766e] hover:bg-[#ccfbf1]"
                 >
-                  {activity.points}
-                </span>
+                  {activity.cta} →
+                </Link>
               </div>
-              <h3 className="text-lg font-extrabold text-slate-900">{activity.title}</h3>
-              <p className="mt-1 text-xs font-semibold text-slate-500">{activity.limit}</p>
-              <p className="mt-2 text-sm text-slate-700">{activity.description}</p>
-              <Link
-                href={activity.href}
-                className="mt-4 inline-flex rounded-xl bg-[#f0fdfa] px-4 py-2 text-sm font-bold text-[#0f766e] hover:bg-[#ccfbf1]"
-              >
-                {activity.cta} →
-              </Link>
-            </div>
+            </StaggerItem>
           ))}
-        </div>
+        </Stagger>
 
-        <div className="mb-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-lg">
+        <Reveal className="mb-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-lg">
           <div className="flex items-start gap-3">
             <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#f0fdfa] text-[#0f766e]">
               <Star size={20} />
@@ -337,43 +348,47 @@ export default function GuidePage() {
               </ul>
             </div>
           </div>
-        </div>
+        </Reveal>
 
-        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg">
-            <div className="mb-3 inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#f0fdfa] text-[#0f766e]">
-              <Trophy size={20} />
+        <Stagger className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2" delayChildren={0.1}>
+          <StaggerItem>
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg h-full">
+              <div className="mb-3 inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#f0fdfa] text-[#0f766e]">
+                <Trophy size={20} />
+              </div>
+              <h2 className="text-lg font-extrabold text-slate-900">Badges &amp; leaderboard</h2>
+              <ul className="mt-3 space-y-2 text-sm text-slate-700">
+                <li>Earn <strong>1 badge every 100 total points</strong>.</li>
+                <li>Your level goes up as you collect more badges.</li>
+                <li>The leaderboard shows weekly activity — rank is for fun, not who wins prizes.</li>
+                <li>Earn above <strong>150 weekly points</strong> to enter the random winner draw.</li>
+              </ul>
+              <Link href="/leaderboard" className="mt-4 inline-flex text-sm font-bold text-[#0f766e] hover:underline">
+                View leaderboard →
+              </Link>
             </div>
-            <h2 className="text-lg font-extrabold text-slate-900">Badges &amp; leaderboard</h2>
-            <ul className="mt-3 space-y-2 text-sm text-slate-700">
-              <li>Earn <strong>1 badge every 100 total points</strong>.</li>
-              <li>Your level goes up as you collect more badges.</li>
-              <li>The leaderboard shows weekly activity — rank is for fun, not who wins prizes.</li>
-              <li>Earn above <strong>150 weekly points</strong> to enter the random winner draw.</li>
-            </ul>
-            <Link href="/leaderboard" className="mt-4 inline-flex text-sm font-bold text-[#0f766e] hover:underline">
-              View leaderboard →
-            </Link>
-          </div>
+          </StaggerItem>
 
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg">
-            <div className="mb-3 inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#fff5f5] text-[#ff6b6b]">
-              <Gift size={20} />
+          <StaggerItem>
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg h-full">
+              <div className="mb-3 inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#fff5f5] text-[#ff6b6b]">
+                <Gift size={20} />
+              </div>
+              <h2 className="text-lg font-extrabold text-slate-900">Tips to maximise points</h2>
+              <ul className="mt-3 space-y-2 text-sm text-slate-700">
+                <li>Sign in every day — consistency builds streaks and weekly activity.</li>
+                <li>Complete daily activities to fill your {POINTS_DAILY_CAP}-point bar (pick your mix — plan can exceed the cap).</li>
+                <li>Check the daily points counter at the top of each page.</li>
+                <li>Complete daily missions and chase the 7-day mystery box on the home page.</li>
+              </ul>
+              <Link href="/rewards" className="mt-4 inline-flex text-sm font-bold text-[#0f766e] hover:underline">
+                View rewards →
+              </Link>
             </div>
-            <h2 className="text-lg font-extrabold text-slate-900">Tips to maximise points</h2>
-            <ul className="mt-3 space-y-2 text-sm text-slate-700">
-              <li>Sign in every day — consistency builds streaks and weekly activity.</li>
-              <li>Complete daily activities to fill your {POINTS_DAILY_CAP}-point bar (pick your mix — plan can exceed the cap).</li>
-              <li>Check the daily points counter at the top of each page.</li>
-              <li>Complete daily missions and chase the 7-day mystery box on the home page.</li>
-            </ul>
-            <Link href="/rewards" className="mt-4 inline-flex text-sm font-bold text-[#0f766e] hover:underline">
-              View rewards →
-            </Link>
-          </div>
-        </div>
+          </StaggerItem>
+        </Stagger>
 
-        <div className="mb-6 rounded-3xl border border-emerald-200 bg-emerald-50 p-6">
+        <Reveal className="mb-6 rounded-3xl border border-emerald-200 bg-emerald-50 p-6">
           <p className="text-sm font-bold text-emerald-900">Quick links to start earning</p>
           <div className="mt-3 flex flex-wrap gap-2">
             <Link href="/quiz" className="inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2 text-sm font-bold text-slate-800 shadow-sm hover:bg-emerald-100">
@@ -401,41 +416,45 @@ export default function GuidePage() {
               Sign in to earn
             </Link>
           </div>
-        </div>
+        </Reveal>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg">
-            <div className="flex items-start gap-3">
-              <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#f0fdfa] text-[#0f766e]">
-                <Shield size={20} />
-              </div>
-              <div>
-                <h2 className="text-lg font-extrabold text-slate-900">Fair play</h2>
-                <p className="mt-2 text-sm text-slate-700">
-                  Be honest, play fairly, and focus on learning. The goal is to build good habits and keep improving.
-                </p>
+        <Stagger className="grid grid-cols-1 gap-4 sm:grid-cols-2" delayChildren={0.08}>
+          <StaggerItem>
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg h-full">
+              <div className="flex items-start gap-3">
+                <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#f0fdfa] text-[#0f766e]">
+                  <Shield size={20} />
+                </div>
+                <div>
+                  <h2 className="text-lg font-extrabold text-slate-900">Fair play</h2>
+                  <p className="mt-2 text-sm text-slate-700">
+                    Be honest, play fairly, and focus on learning. The goal is to build good habits and keep improving.
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          </StaggerItem>
 
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg">
-            <div className="flex items-start gap-3">
-              <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#fff5f5] text-[#ff6b6b]">
-                <HelpCircle size={20} />
-              </div>
-              <div>
-                <h2 className="text-lg font-extrabold text-slate-900">Need help?</h2>
-                <p className="mt-2 text-sm text-slate-700">
-                  WhatsApp{' '}
-                  <a className="font-bold text-[#0f766e] hover:underline" href="https://wa.me/447404644610" target="_blank" rel="noopener noreferrer">
-                    07404644610
-                  </a>{' '}
-                  for login help or questions.
-                </p>
+          <StaggerItem>
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg h-full">
+              <div className="flex items-start gap-3">
+                <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#fff5f5] text-[#ff6b6b]">
+                  <HelpCircle size={20} />
+                </div>
+                <div>
+                  <h2 className="text-lg font-extrabold text-slate-900">Need help?</h2>
+                  <p className="mt-2 text-sm text-slate-700">
+                    WhatsApp{' '}
+                    <a className="font-bold text-[#0f766e] hover:underline" href="https://wa.me/447404644610" target="_blank" rel="noopener noreferrer">
+                      07404644610
+                    </a>{' '}
+                    for login help or questions.
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
+          </StaggerItem>
+        </Stagger>
       </div>
     </div>
   );

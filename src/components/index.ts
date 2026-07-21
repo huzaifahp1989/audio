@@ -36,3 +36,4 @@ export * from './AnnouncementImageSlideshow';
 export * from './PointsProgressPopup';
 export * from './NotificationSettings';
 export * from './WordSearchGame';
+export * from './Motion';

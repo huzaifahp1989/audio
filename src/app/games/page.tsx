@@ -18,6 +18,7 @@ import { Star, Trophy, Target, Sparkles, ArrowLeft, Puzzle } from 'lucide-react'
 import Link from 'next/link';
 import { useAgeMode } from '@/lib/age-mode';
 import { EarnMorePointsLinks } from '@/components/EarnMorePointsLinks';
+import { FadeUp, Stagger, StaggerItem } from '@/components/Motion';
 
 type GameId = 'hangman' | 'crossword' | 'scramble' | 'true-or-false' | 'names-of-allah';
 type TaskKind = 'mcq' | 'hangman' | 'crossword' | 'scramble';
@@ -499,7 +500,7 @@ export default function GamesPage() {
       <div className="page-canvas pattern-islamic">
         <div className="page-wrap max-w-5xl space-y-8">
           <EarnMorePointsLinks title="Earn more points today" />
-          <div className="hero-panel text-center space-y-4 p-8 stagger-in">
+          <FadeUp className="hero-panel text-center space-y-4 p-8">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#fffbeb] rounded-full border border-[#fbbf24]/30 mx-auto">
               <Sparkles size={16} className="text-[#f59e0b]" />
               <span className="text-sm font-semibold text-[#b45309]">Learn Through Play</span>
@@ -508,8 +509,9 @@ export default function GamesPage() {
             <p className="text-[#475569] text-lg max-w-2xl mx-auto">
               Finish up to {MAX_DAILY_GAME_COMPLETIONS} full games per day — +{ACTIVITY_BONUS_POINTS} points each ({gamesUsedToday}/{MAX_DAILY_GAME_COMPLETIONS} used today).
             </p>
-          </div>
-          <div className="feature-tile bg-gradient-to-r from-[#ecfeff] to-[#f0fdfa] border-[#0d9488]/30 p-5 text-center">
+          </FadeUp>
+          <FadeUp delay={0.1}>
+            <div className="feature-tile border-[#0d9488]/30 bg-gradient-to-r from-[#ecfeff] to-[#f0fdfa] p-5 text-center">
             <p className="text-[#115e59] font-bold text-base md:text-lg">
               Weekly competition updates are posted in Rewards and Leaderboard.
             </p>
@@ -522,16 +524,19 @@ export default function GamesPage() {
             <p className="text-[#115e59] mt-2 text-sm md:text-base font-semibold">
               Check the Rewards page for important announcements and your weekly and monthly achievements.
             </p>
-          </div>
-          <div className="grid grid-cols-3 gap-4 max-w-md mx-auto stagger-in">
+            </div>
+          </FadeUp>
+          <Stagger className="mx-auto grid max-w-md grid-cols-3 gap-4" delayChildren={0.15}>
             {[{ icon: Star, label: 'Your Points', value: profile?.points || 0, color: 'text-[#f59e0b]' }, { icon: Trophy, label: 'Badges', value: profile?.badges || 0, color: 'text-[#0d9488]' }, { icon: Target, label: 'Games Played', value: profile?.gamesPlayed || 0, color: 'text-[#14b8a6]' }].map((stat, idx) => (
-              <div key={idx} className="stat-pill rounded-xl p-4 text-center">
-                <stat.icon size={24} className={`mx-auto mb-2 ${stat.color}`} />
-                <p className="text-2xl font-bold text-[#134e4a]">{stat.value}</p>
-                <p className="text-xs text-[#475569]">{stat.label}</p>
-              </div>
+              <StaggerItem key={idx}>
+                <div className="stat-pill rounded-xl p-4 text-center">
+                  <stat.icon size={24} className={`mx-auto mb-2 ${stat.color}`} />
+                  <p className="text-2xl font-bold text-[#134e4a]">{stat.value}</p>
+                  <p className="text-xs text-[#475569]">{stat.label}</p>
+                </div>
+              </StaggerItem>
             ))}
-          </div>
+          </Stagger>
           {/* ── Quran Memory Match ── */}
           <div
             className="rounded-2xl overflow-hidden border border-purple-300/40 shadow-sm cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all"
@@ -665,46 +670,64 @@ export default function GamesPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 stagger-in">
-            <Link
-              href="/games/memory-match"
-              className="feature-tile group rounded-2xl border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-6 text-left"
-            >
-              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 shadow-md transition-transform group-hover:scale-110">
-                <span className="text-3xl">🃏</span>
-              </div>
-              <h3 className="mb-1 text-lg font-bold text-[#134e4a]">Islamic Memory Match</h3>
-              <p className="mb-3 text-sm text-[#475569]">
-                {isYounger
-                  ? 'Big picture cards — find the matching pairs!'
-                  : 'Match Arabic terms with English meanings. Optional timer.'}
-              </p>
-              <span className="inline-block rounded-full border border-amber-300 bg-white px-3 py-1 text-xs font-semibold text-amber-800">
-                🌟 Earn +{ACTIVITY_BONUS_POINTS} pts
-              </span>
-            </Link>
-            {gameCatalog.map(game => (
-              <button key={game.id} onClick={() => startGame(game.id)} className="feature-tile group rounded-2xl p-6 text-left">
-                <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${game.color} flex items-center justify-center shadow-md group-hover:scale-110 transition-transform mb-4`}>
-                  <span className="text-3xl">{game.icon}</span>
+          <Stagger className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3" delayChildren={0.2}>
+            <StaggerItem>
+              <Link
+                href="/games/memory-match"
+                className="feature-tile group rounded-2xl border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-6 text-left"
+              >
+                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 shadow-md transition-transform group-hover:scale-110">
+                  <span className="text-3xl">🃏</span>
                 </div>
-                <h3 className="font-bold text-[#134e4a] text-lg mb-1">{game.title}</h3>
-                <p className="text-sm text-[#475569] mb-3">{game.description}</p>
-                <span className="inline-block text-xs font-semibold text-[#0f766e] bg-[#f0fdfa] px-3 py-1 rounded-full border border-[#0d9488]/30">🌟 Earn points</span>
-              </button>
+                <h3 className="mb-1 text-lg font-bold text-[#134e4a]">Islamic Memory Match</h3>
+                <p className="mb-3 text-sm text-[#475569]">
+                  {isYounger
+                    ? 'Big picture cards — find the matching pairs!'
+                    : 'Match Arabic terms with English meanings. Optional timer.'}
+                </p>
+                <span className="inline-block rounded-xl border border-amber-300 bg-white px-3 py-1 text-xs font-semibold text-amber-800">
+                  🌟 Earn +{ACTIVITY_BONUS_POINTS} pts
+                </span>
+              </Link>
+            </StaggerItem>
+            {gameCatalog.map((game) => (
+              <StaggerItem key={game.id}>
+                <button
+                  type="button"
+                  onClick={() => startGame(game.id)}
+                  className="feature-tile group w-full rounded-2xl p-6 text-left"
+                >
+                  <div
+                    className={`mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br ${game.color} shadow-md transition-transform group-hover:scale-110`}
+                  >
+                    <span className="text-3xl">{game.icon}</span>
+                  </div>
+                  <h3 className="mb-1 text-lg font-bold text-[#134e4a]">{game.title}</h3>
+                  <p className="mb-3 text-sm text-[#475569]">{game.description}</p>
+                  <span className="inline-block rounded-xl border border-[#0d9488]/30 bg-[#f0fdfa] px-3 py-1 text-xs font-semibold text-[#0f766e]">
+                    🌟 Earn points
+                  </span>
+                </button>
+              </StaggerItem>
             ))}
-          </div>
-          <div className="feature-tile bg-[#f0fdfa] rounded-2xl p-6 border-[#0d9488]/20">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-[#0d9488] flex items-center justify-center flex-shrink-0">
-                <Puzzle size={24} className="text-white" />
-              </div>
-              <div>
-                <h4 className="font-bold text-[#0f766e] mb-1">Pro Tip</h4>
-                <p className="text-[#115e59]">Try all 5 games to learn different aspects of Islam — hangman improves vocabulary, the crossword tests spelling, word scramble sharpens recognition, and the quizzes deepen your knowledge of Allah's names and Islamic facts!</p>
+          </Stagger>
+          <FadeUp delay={0.25}>
+            <div className="feature-tile rounded-2xl border-[#0d9488]/20 bg-[#f0fdfa] p-6">
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-[#0d9488]">
+                  <Puzzle size={24} className="text-white" />
+                </div>
+                <div>
+                  <h4 className="mb-1 font-bold text-[#0f766e]">Pro Tip</h4>
+                  <p className="text-[#115e59]">
+                    Try all 5 games to learn different aspects of Islam — hangman improves vocabulary, the crossword
+                    tests spelling, word scramble sharpens recognition, and the quizzes deepen your knowledge of
+                    Allah&apos;s names and Islamic facts!
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          </FadeUp>
         </div>
       </div>
       {toast && <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-[#134e4a] text-white px-6 py-3 rounded-xl shadow-lg z-50">{toast}</div>}
