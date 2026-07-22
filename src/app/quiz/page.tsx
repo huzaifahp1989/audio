@@ -367,6 +367,27 @@ export default function QuizPage() {
       <BiWeeklyResetPopup pageKey="quiz" />
       <div className="min-h-screen bg-[#f5f3ff] pattern-islamic">
         <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+          {/* Islamic Quiz Challenge — shown at the very top so it is easy to find */}
+          <Link
+            href="/quiz-challenge"
+            className="block rounded-2xl border border-amber-300/50 bg-gradient-to-r from-[#4c1d95] via-[#6d28d9] to-[#7c3aed] p-4 text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl sm:p-5"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="text-3xl" aria-hidden>🌙</span>
+                <div>
+                  <p className="text-lg font-black leading-tight sm:text-xl">Safar Islamic Quiz Challenge</p>
+                  <p className="text-xs text-violet-100/90 sm:text-sm">
+                    Quran Stories &amp; Fiqh quizzes — type your answers, one attempt each!
+                  </p>
+                </div>
+              </div>
+              <span className="hidden shrink-0 items-center gap-1 rounded-full bg-white/15 px-3 py-1.5 text-sm font-bold text-amber-100 sm:inline-flex">
+                Play now →
+              </span>
+            </div>
+          </Link>
+
           <EarnMorePointsLinks title="Earn more points today" />
 
           {/* Header */}
