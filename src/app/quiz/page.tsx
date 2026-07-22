@@ -194,9 +194,12 @@ export default function QuizPage() {
       return;
     }
 
+    const questionId = String(currentQuestion?.id || '');
+    const answer = selectedAnswer;
+
     setDailyAnswers(prev => ({
       ...prev,
-      [currentQuestion.id]: selectedAnswer
+      [questionId]: answer
     }));
 
     if (currentQuestionIndex < currentQuestions.length - 1) {
@@ -204,11 +207,12 @@ export default function QuizPage() {
       setSelectedAnswer(null);
       setShowFeedback(false);
     } else {
-      finishQuiz();
+      finishQuiz(questionId, answer);
     }
   };
 
-  const finishQuiz = () => {
+  const finishQuiz = (lastQuestionId?: string, lastAnswer?: number | null) => {
+    try {
     if (!selectedTopic) {
       setResultToast('Please select a topic first.');
       return;
@@ -220,13 +224,28 @@ export default function QuizPage() {
       return;
     }
 
+    const questionId = String(lastQuestionId || currentQuestion?.id || '');
+    const answer = lastAnswer ?? selectedAnswer;
+
     setQuizComplete(true);
+
+    if (!questionId || answer === null || answer === undefined) {
+      setDailyResult({
+        score: 0,
+        maxScore: currentQuestions.length,
+        awardedPoints: 0,
+        syncing: false,
+        message: 'Could not read your last answer. Tap Finish Quiz again.',
+      });
+      return;
+    }
+
     const endTime = Date.now();
     const duration = Math.floor((endTime - startTime) / 1000);
 
     const finalAnswers: Record<string, number> = {
       ...dailyAnswers,
-      [String(currentQuestion.id)]: Number(selectedAnswer)
+      [questionId]: Number(answer)
     };
 
     const localCorrect = currentQuestions.reduce((count: number, question: any) => {
@@ -368,6 +387,17 @@ export default function QuizPage() {
       );
     }
     })();
+    } catch (err) {
+      console.error('finishQuiz failed:', err);
+      setQuizComplete(true);
+      setDailyResult({
+        score: 0,
+        maxScore: currentQuestions.length,
+        awardedPoints: 0,
+        syncing: false,
+        message: 'Quiz finished — tap Exit and try again if points did not save.',
+      });
+    }
   };
 
   const resetPage = () => {
