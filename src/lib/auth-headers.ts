@@ -9,10 +9,23 @@ export async function getAuthFetchHeaders(extra?: Record<string, string>): Promi
   };
 }
 
-export async function authJsonFetch(url: string, init: RequestInit = {}): Promise<Response> {
+export type AuthJsonFetchOptions = RequestInit & {
+  /** Abort the request after this many milliseconds (default 25s). */
+  timeoutMs?: number;
+};
+
+export async function authJsonFetch(url: string, init: AuthJsonFetchOptions = {}): Promise<Response> {
+  const { timeoutMs = 25_000, ...fetchInit } = init;
   const headers = await getAuthFetchHeaders({
     'Content-Type': 'application/json',
-    ...(init.headers as Record<string, string> | undefined),
+    ...(fetchInit.headers as Record<string, string> | undefined),
   });
-  return fetch(url, { ...init, headers });
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...fetchInit, headers, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
 }

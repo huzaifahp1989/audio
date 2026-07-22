@@ -28,6 +28,17 @@ export async function ensureUserRecords(userId: string): Promise<EnsureUserRecor
     return { ok: false, userId: '', createdUser: false, createdPoints: false, error: 'Missing user id.' };
   }
 
+  // Fast path for quiz submit and other hot paths: skip auth.admin lookup when rows exist.
+  {
+    const [userProbe, pointsProbe] = await Promise.all([
+      supabaseAdmin.from('users').select('uid').eq('uid', uid).maybeSingle(),
+      supabaseAdmin.from('users_points').select('user_id').eq('user_id', uid).maybeSingle(),
+    ]);
+    if (!userProbe.error && !pointsProbe.error && userProbe.data?.uid && pointsProbe.data?.user_id) {
+      return { ok: true, userId: uid, createdUser: false, createdPoints: false };
+    }
+  }
+
   let authName = '';
   let authEmail = '';
   let metaAge: number | null = null;

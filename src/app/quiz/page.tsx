@@ -52,7 +52,6 @@ export default function QuizPage() {
   const [dailyAnswers, setDailyAnswers] = useState<Record<string, number>>({});
   const [startTime, setStartTime] = useState<number>(0);
   const [dailyResult, setDailyResult] = useState<any>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [todayDate, setTodayDate] = useState<string>('');
   const [selectedTopic, setSelectedTopic] = useState<QuizTopicId | null>(null);
 
@@ -222,7 +221,6 @@ export default function QuizPage() {
     }
 
     setQuizComplete(true);
-    setIsSubmitting(true);
     const endTime = Date.now();
     const duration = Math.floor((endTime - startTime) / 1000);
 
@@ -230,6 +228,22 @@ export default function QuizPage() {
       ...dailyAnswers,
       [String(currentQuestion.id)]: Number(selectedAnswer)
     };
+
+    const localCorrect = currentQuestions.reduce((count: number, question: any) => {
+      const answer = finalAnswers[String(question.id)];
+      return count + (Number(answer) === Number(question.correctAnswer) ? 1 : 0);
+    }, 0);
+    const localScore = localCorrect * 10;
+    const maxScore = currentQuestions.length * 10;
+
+    // Show results immediately — server sync runs in the background.
+    setDailyResult({
+      score: localScore,
+      maxScore,
+      awardedPoints: 0,
+      message: 'Saving your score…',
+      syncing: true,
+    });
 
     try {
       if (!user?.id) {
@@ -240,6 +254,7 @@ export default function QuizPage() {
 
       const res = await authJsonFetch('/api/quiz/daily/submit', {
         method: 'POST',
+        timeoutMs: 25_000,
         body: JSON.stringify({
           userId: user?.id,
           quizId: activeQuizId || `topic-${selectedTopic}-${todaySeed}-${user.id}`,
@@ -258,7 +273,7 @@ export default function QuizPage() {
         if (data.lockedUntil) {
           setQuizLockedUntil(data.lockedUntil);
         }
-        setDailyResult({ score: data.lastScore ?? 0, awardedPoints: 0, message: data.error || 'Quiz already completed in the last 24 hours.' });
+        setDailyResult({ score: data.lastScore ?? localScore, maxScore, awardedPoints: 0, syncing: false, message: data.error || 'Quiz already completed in the last 24 hours.' });
         setResultToast('You have finished both quizzes for today. Play games or pledge Durood & Zikr to earn more points!');
         return;
       }
@@ -276,7 +291,8 @@ export default function QuizPage() {
       
       if (data.success) {
         const awardedPoints = Number(data.points ?? data.awardedPoints ?? 0);
-        setDailyResult({ ...data, awardedPoints, message: data.message });
+        const serverScore = Number(data.score ?? localScore);
+        setDailyResult({ ...data, score: serverScore, maxScore: Number(data.maxScore ?? maxScore), awardedPoints, syncing: false, message: data.message });
         const attemptsToday = Number(data.attemptsToday || 0);
         const maxDailyAttempts = Number(data.maxDailyAttempts || MAX_DAILY_QUIZ_ATTEMPTS);
         setQuizAttemptsToday(attemptsToday);
@@ -323,13 +339,24 @@ export default function QuizPage() {
           }).catch(() => {});
         }
       } else {
+        setDailyResult((prev: any) => ({ ...prev, syncing: false }));
         setResultToast(data.error || 'Submission failed');
       }
     } catch (err) {
       console.error('Submission error:', err);
-      setResultToast('Network error submitting quiz');
-    } finally {
-      setIsSubmitting(false);
+      const timedOut = err instanceof Error && err.name === 'AbortError';
+      setDailyResult((prev: any) => ({
+        ...prev,
+        syncing: false,
+        message: timedOut
+          ? 'Score saved locally. Points may take a moment — refresh your profile if needed.'
+          : prev?.message,
+      }));
+      setResultToast(
+        timedOut
+          ? 'Submission is taking longer than usual. Your score is shown — points will sync when the server responds.'
+          : 'Network error submitting quiz. Your score is shown above.'
+      );
     }
   };
 
@@ -776,20 +803,17 @@ export default function QuizPage() {
         ) : (
           // Quiz Complete View
           <div className="bg-white rounded-2xl shadow-lg border border-[#c4b5fd]/30 p-8 text-center">
-            {isSubmitting ? (
-              <div className="py-12">
-                <div className="animate-spin text-4xl mb-4">🔄</div>
-                <p className="text-[#1e1b4b]">Submitting your answers...</p>
+            <>
+              <div className="w-24 h-24 bg-gradient-to-br from-[#fbbf24] to-[#f59e0b] rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                <Trophy size={48} className="text-white" />
               </div>
-            ) : (
-              <>
-                <div className="w-24 h-24 bg-gradient-to-br from-[#fbbf24] to-[#f59e0b] rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
-                  <Trophy size={48} className="text-white" />
-                </div>
-                <h2 className="text-3xl font-bold text-[#1e1b4b] mb-2">Quiz Completed!</h2>
-                <p className="text-[#475569] mb-6">MashaAllah! You finished the daily quiz.</p>
+              <h2 className="text-3xl font-bold text-[#1e1b4b] mb-2">Quiz Completed!</h2>
+              <p className="text-[#475569] mb-6">MashaAllah! You finished the daily quiz.</p>
+              {dailyResult?.syncing ? (
+                <p className="mb-4 text-sm font-semibold text-[#6d28d9]">Saving your score and points…</p>
+              ) : null}
 
-                <div className="space-y-4 mb-8">
+              <div className="space-y-4 mb-8">
                   <div className="bg-[#f5f3ff] rounded-xl p-4">
                     <p className="text-sm text-[#6d28d9] font-semibold uppercase tracking-wide">Your Score</p>
                     <p className="text-4xl font-bold text-[#7c3aed]">{dailyResult?.score} / {currentQuestions.length}</p>
@@ -846,8 +870,7 @@ export default function QuizPage() {
                 >
                   Return to Quiz Menu
                 </button>
-              </>
-            )}
+            </>
           </div>
         )}
       </div>

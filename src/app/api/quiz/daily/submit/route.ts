@@ -225,8 +225,10 @@ export async function POST(req: Request) {
       const fromClient = resolveSubmittedTopicQuestions(topicFromId, submittedIds);
       const hasTrustedClientQuestions = fromClient.length > 0;
 
+      const activeQuestionsEarly = hasTrustedClientQuestions ? fromClient : null;
+
       // Parallelize independent reads. Skip question-history lookup when the client sent a valid set.
-      const [ensured, exclusions, limit] = await Promise.all([
+      const [ensured, exclusions, limit, sessionQuizRecordId] = await Promise.all([
         ensureUserRecords(auth.userId),
         hasTrustedClientQuestions
           ? Promise.resolve({ today: [] as string[], recent: [] as string[], attemptsToday: 0 })
@@ -234,6 +236,13 @@ export async function POST(req: Request) {
         isTestMode
           ? Promise.resolve({ blocked: null as NextResponse | null, attemptsToday: 0 })
           : enforceDailyQuizAttemptLimit(userId),
+        activeQuestionsEarly
+          ? createSessionQuizRecordId(
+              topicFromId,
+              activeQuestionsEarly.map((q: any) => String(q.id)),
+              `${userId}:${topicFromId}:${randomUUID()}`
+            )
+          : Promise.resolve(''),
       ]);
 
       if (!ensured.ok) {
@@ -261,11 +270,13 @@ export async function POST(req: Request) {
 
       const allowedQuestionIds = new Set(activeQuestions.map((q: any) => String(q.id)));
 
-      const sessionQuizRecordId = await createSessionQuizRecordId(
-        topicFromId,
-        activeQuestions.map((q: any) => String(q.id)),
-        `${userId}:${topicFromId}:${randomUUID()}`
-      );
+      const resolvedSessionQuizRecordId =
+        sessionQuizRecordId ||
+        (await createSessionQuizRecordId(
+          topicFromId,
+          activeQuestions.map((q: any) => String(q.id)),
+          `${userId}:${topicFromId}:${randomUUID()}`
+        ));
 
       let correctCount = 0;
       const questionMap = new Map(activeQuestions.map((q: any) => [String(q.id), q]));
@@ -282,7 +293,7 @@ export async function POST(req: Request) {
 
       const { error: attemptError } = await supabaseAdmin.from('quiz_attempts').insert({
         user_id: userId,
-        quiz_id: sessionQuizRecordId,
+        quiz_id: resolvedSessionQuizRecordId,
         topic: topicFromId,
         question_ids: activeQuestions.map((q: any) => String(q.id)),
         score,
