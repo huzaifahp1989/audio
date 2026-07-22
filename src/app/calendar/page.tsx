@@ -56,8 +56,8 @@ export default function IslamicCalendarPage() {
             </div>
           </div>
           <p className="mt-4 rounded-2xl bg-white/10 px-4 py-2 text-center text-xs text-violet-100/90 md:text-left">
-            Based on the Umm al-Qura calculation. In the UK, the exact day can sometimes change by one
-            day depending on the moon sighting.
+            Adjusted to match the UK moon-sighting date. The exact day can still occasionally vary by a
+            day depending on the local sighting.
           </p>
         </div>
 

@@ -24,10 +24,19 @@ const UK_TIME_ZONE = 'Europe/London';
 
 /**
  * Islamic calendar used for the calculation. `islamic-umalqura` (the Umm al-Qura
- * calendar) is the most widely used civil Hijri calendar. Local moon-sighting in
- * the UK can occasionally differ by a day.
+ * calendar) is the most widely used civil Hijri calendar.
  */
 const HIJRI_LOCALE = 'en-GB-u-ca-islamic-umalqura';
+
+/**
+ * Day adjustment applied to the Umm al-Qura result to match the date observed in
+ * the UK. UK moon-sighting typically runs one day behind the Umm al-Qura
+ * calculation, so we shift the Hijri computation back by a day. The Gregorian
+ * date shown to the user is NOT shifted — it always reflects the real calendar day.
+ */
+const UK_HIJRI_ADJUSTMENT_DAYS = -1;
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 function partValue(parts: Intl.DateTimeFormatPart[], type: Intl.DateTimeFormatPartTypes): string {
   return parts.find((p) => p.type === type)?.value ?? '';
@@ -40,18 +49,26 @@ function partValue(parts: Intl.DateTimeFormatPart[], type: Intl.DateTimeFormatPa
  * timezone so the date is correct for UK users and rolls over at UK midnight.
  */
 export function getUkHijriDate(date: Date = new Date()): UkHijriDate {
+  // Shift only the Hijri computation to match UK moon-sighting; the Gregorian
+  // display below still uses the unshifted `date`.
+  const hijriDate = new Date(date.getTime() + UK_HIJRI_ADJUSTMENT_DAYS * MS_PER_DAY);
+
   const hijriParts = new Intl.DateTimeFormat(HIJRI_LOCALE, {
     timeZone: UK_TIME_ZONE,
     weekday: 'long',
     day: 'numeric',
     month: 'numeric',
     year: 'numeric',
-  }).formatToParts(date);
+  }).formatToParts(hijriDate);
 
   const day = parseInt(partValue(hijriParts, 'day'), 10) || 1;
   const monthNumber = parseInt(partValue(hijriParts, 'month'), 10) || 1;
   const year = parseInt(partValue(hijriParts, 'year').replace(/[^0-9]/g, ''), 10) || 0;
-  const weekday = partValue(hijriParts, 'weekday');
+  // Weekday reflects the real calendar day, not the Hijri-adjusted one.
+  const weekday = new Intl.DateTimeFormat('en-GB', {
+    timeZone: UK_TIME_ZONE,
+    weekday: 'long',
+  }).format(date);
 
   // Prefer our consistent, kid-friendly spelling from the data file, falling
   // back to the value Intl produced if the number is somehow out of range.
