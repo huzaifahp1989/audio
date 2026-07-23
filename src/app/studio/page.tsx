@@ -45,18 +45,36 @@ export default function StudioPage() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const intervalRef = useRef<number | null>(null);
+  const elapsedMsRef = useRef(0);
+  const studioStateRef = useRef<StudioState>('idle');
+  const assemblingRef = useRef(false);
+
+  useEffect(() => {
+    studioStateRef.current = studioState;
+  }, [studioState]);
+
+  useEffect(() => {
+    elapsedMsRef.current = elapsedMs;
+  }, [elapsedMs]);
 
   const resetRecording = () => {
+    assemblingRef.current = false;
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop();
+      try {
+        mediaRecorderRef.current.stop();
+      } catch {
+        /* ignore */
+      }
     }
+    mediaRecorderRef.current = null;
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(t => t.stop());
+      streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
     if (audioContextRef.current) {
-      audioContextRef.current.close();
+      void audioContextRef.current.close();
       audioContextRef.current = null;
+      analyserRef.current = null;
     }
     if (audioUrl) {
       URL.revokeObjectURL(audioUrl);
@@ -66,7 +84,9 @@ export default function StudioPage() {
     setAudioUrl(null);
     setStudioState('idle');
     setElapsedMs(0);
+    elapsedMsRef.current = 0;
     setLevel(0);
+    setRecordingQuality(null);
   };
 
   const setupAnalyser = (stream: MediaStream) => {
@@ -96,7 +116,7 @@ export default function StudioPage() {
       const rms = Math.sqrt(sum / dataArray.length);
       const normalized = Math.min(1, rms / 40);
       setLevel(normalized);
-      if (studioState === 'recording') {
+      if (studioStateRef.current === 'recording') {
         requestAnimationFrame(tick);
       }
     };
@@ -108,9 +128,11 @@ export default function StudioPage() {
     if (intervalRef.current) {
       window.clearInterval(intervalRef.current);
     }
-    const startAt = performance.now() - elapsedMs;
+    const startAt = performance.now() - elapsedMsRef.current;
     intervalRef.current = window.setInterval(() => {
-      setElapsedMs(performance.now() - startAt);
+      const next = performance.now() - startAt;
+      elapsedMsRef.current = next;
+      setElapsedMs(next);
     }, 200);
   };
 
@@ -145,6 +167,32 @@ export default function StudioPage() {
     }
   };
 
+  const finishRecordingFromChunks = (recorder: MediaRecorder) => {
+    if (assemblingRef.current) return;
+    assemblingRef.current = true;
+    stopTimer();
+
+    const blobType = recorder.mimeType || chunksRef.current[0]?.type || 'audio/webm';
+    const blob = new Blob(chunksRef.current, { type: blobType });
+    if (!blob.size) {
+      assemblingRef.current = false;
+      setStudioState('idle');
+      setPermissionError('Nothing was recorded. Please try again and allow the microphone.');
+      return;
+    }
+
+    lastBlobRef.current = blob;
+    const url = URL.createObjectURL(blob);
+    setAudioUrl(url);
+    setStudioState('finished');
+
+    const timerSeconds = Math.max(1, Math.round(elapsedMsRef.current / 1000));
+    // Defer so quality helper from this render is definitely initialised.
+    window.setTimeout(() => {
+      void analyzeRecordingQuality(blob, timerSeconds);
+    }, 0);
+  };
+
   const handleStart = async () => {
     if (!category) {
       setPermissionError('Choose what you want to record first (Qur’an, Nasheed, Story, or Hadith).');
@@ -152,6 +200,11 @@ export default function StudioPage() {
     }
     const stream = streamRef.current || (await requestMic());
     if (!stream) return;
+
+    assemblingRef.current = false;
+    setSubmitError(null);
+    setSubmitSuccess(null);
+    setRecordingQuality(null);
 
     if (!mediaRecorderRef.current || mediaRecorderRef.current.state === 'inactive') {
       const preferredTypes = [
@@ -161,30 +214,20 @@ export default function StudioPage() {
         'audio/ogg;codecs=opus',
         'audio/ogg',
       ];
-      const supportedType = preferredTypes.find(t => typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(t));
-      const recorder = supportedType ? new MediaRecorder(stream, { mimeType: supportedType }) : new MediaRecorder(stream);
+      const supportedType = preferredTypes.find(
+        (t) => typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(t)
+      );
+      const recorder = supportedType
+        ? new MediaRecorder(stream, { mimeType: supportedType })
+        : new MediaRecorder(stream);
       chunksRef.current = [];
-      recorder.ondataavailable = e => {
+      recorder.ondataavailable = (e) => {
         if (e.data && e.data.size > 0) {
           chunksRef.current.push(e.data);
         }
-        // When recorder is stopped, the final chunk arrives here; assemble blob now
-        if (recorder.state === 'inactive') {
-          const blobType = recorder.mimeType || chunksRef.current[0]?.type || 'audio/webm';
-          const blob = new Blob(chunksRef.current, { type: blobType });
-          lastBlobRef.current = blob;
-          const url = URL.createObjectURL(blob);
-          setAudioUrl(url);
-          setStudioState('finished');
-          stopTimer();
-
-          // Analyze recording quality
-          analyzeRecordingQuality(blob, Math.floor(elapsedMs / 1000));
-        }
       };
-      // Keep onstop minimal; some browsers dispatch dataavailable after stop event
       recorder.onstop = () => {
-        // no-op; assembly happens in ondataavailable
+        finishRecordingFromChunks(recorder);
       };
       mediaRecorderRef.current = recorder;
     }
@@ -193,7 +236,18 @@ export default function StudioPage() {
       setupAnalyser(stream);
     }
 
-    mediaRecorderRef.current.start();
+    chunksRef.current = [];
+    lastBlobRef.current = null;
+    if (audioUrl) {
+      URL.revokeObjectURL(audioUrl);
+      setAudioUrl(null);
+    }
+
+    try {
+      mediaRecorderRef.current.start(1000);
+    } catch {
+      mediaRecorderRef.current.start();
+    }
     setStudioState('recording');
     startTimer();
     startLevelMeter();
@@ -216,12 +270,13 @@ export default function StudioPage() {
   const handleStop = () => {
     if (!mediaRecorderRef.current) return;
     if (mediaRecorderRef.current.state !== 'inactive') {
-      if (typeof mediaRecorderRef.current.requestData === 'function') {
-        mediaRecorderRef.current.requestData();
+      try {
+        mediaRecorderRef.current.stop();
+      } catch (err) {
+        console.error('Failed to stop recorder:', err);
+        setPermissionError('Could not finish the recording. Please try again.');
       }
-      mediaRecorderRef.current.stop();
     }
-    // Quality analysis will happen in ondataavailable
   };
 
   const handleReset = () => {
@@ -274,7 +329,10 @@ export default function StudioPage() {
       formData.append('recording', lastBlobRef.current, `recording.${extension}`);
       formData.append('category', category);
       formData.append('title', title || '');
-      const seconds = Math.floor(elapsedMs / 1000);
+      const seconds = Math.max(
+        1,
+        recordingQuality?.duration || Math.round(elapsedMsRef.current / 1000)
+      );
       formData.append('duration', String(seconds));
       formData.append('childName', childName || profile?.name || '');
       if (user?.id) {
@@ -287,7 +345,7 @@ export default function StudioPage() {
         body: formData,
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.success) {
         setSubmitError(data.error || 'Failed to submit recording. Please try again.');
       } else {
@@ -297,41 +355,46 @@ export default function StudioPage() {
         }
       }
     } catch (err) {
+      console.error(err);
       setSubmitError('Failed to submit recording. Please try again.');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const analyzeRecordingQuality = async (blob: Blob, duration: number) => {
+  const analyzeRecordingQuality = async (blob: Blob, timerSeconds: number) => {
     try {
       const arrayBuffer = await blob.arrayBuffer();
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer.slice(0));
+      void audioContext.close();
 
-      // Calculate average volume (RMS)
       const channelData = audioBuffer.getChannelData(0);
       let sum = 0;
-      for (let i = 0; i < channelData.length; i++) {
+      const step = Math.max(1, Math.floor(channelData.length / 50000));
+      let samples = 0;
+      for (let i = 0; i < channelData.length; i += step) {
         sum += channelData[i] * channelData[i];
+        samples += 1;
       }
-      const rms = Math.sqrt(sum / channelData.length);
-      const averageVolume = Math.round(rms * 100);
-
-      // Quality assessment
-      const hasGoodQuality = duration >= 30 && duration <= 300 && averageVolume > 5;
+      const rms = Math.sqrt(sum / Math.max(1, samples));
+      // Map typical speech RMS (~0.01–0.2) onto a friendlier 0–100 scale.
+      const averageVolume = Math.min(100, Math.round(rms * 400));
+      const duration = Math.max(timerSeconds, Math.round(audioBuffer.duration || 0));
+      const hasGoodQuality = duration >= 10 && duration <= 300 && averageVolume >= 1;
 
       setRecordingQuality({
         duration,
         averageVolume,
-        hasGoodQuality
+        hasGoodQuality,
       });
     } catch (error) {
       console.error('Quality analysis failed:', error);
+      // Still allow submit — decoding can fail on some mobile codecs.
       setRecordingQuality({
-        duration,
+        duration: timerSeconds,
         averageVolume: 0,
-        hasGoodQuality: duration >= 30 && duration <= 300
+        hasGoodQuality: timerSeconds >= 10,
       });
     }
   };
@@ -529,13 +592,11 @@ export default function StudioPage() {
             <span>🎧 Listen to your recording</span>
             {!audioUrl && <span className="text-xs font-normal text-slate-500">(Record something first)</span>}
           </h2>
-          {audioUrl ? (
+              {audioUrl ? (
             <div className="space-y-4">
-              <audio controls className="w-full">
-                <source src={audioUrl} type="audio/webm" />
-              </audio>
+              <audio controls className="w-full" src={audioUrl} />
 
-              {/* Quality Indicator */}
+              {/* Quality Indicator — advisory only; never blocks submit */}
               {recordingQuality && (
                 <div className={`p-3 rounded-lg border ${
                   recordingQuality.hasGoodQuality
@@ -543,15 +604,32 @@ export default function StudioPage() {
                     : 'bg-yellow-50 border-yellow-200 text-yellow-800'
                 }`}>
                   <div className="flex items-center gap-2 text-sm font-medium">
-                    {recordingQuality.hasGoodQuality ? '✅' : '⚠️'} Recording Quality
+                    {recordingQuality.hasGoodQuality ? '✅' : '⚠️'} Recording tip
                   </div>
                   <div className="text-xs mt-1 space-y-1">
-                    <div>Duration: {recordingQuality.duration}s {recordingQuality.duration < 30 ? '(too short)' : recordingQuality.duration > 300 ? '(too long)' : '(good)'}</div>
-                    <div>Volume: {recordingQuality.averageVolume}% {recordingQuality.averageVolume < 5 ? '(too quiet)' : '(good)'}</div>
+                    <div>
+                      Duration: {recordingQuality.duration}s{' '}
+                      {recordingQuality.duration < 10
+                        ? '(a bit short — try 10+ seconds if you can)'
+                        : recordingQuality.duration > 300
+                          ? '(very long)'
+                          : '(good)'}
+                    </div>
+                    {recordingQuality.averageVolume > 0 && (
+                      <div>
+                        Volume: {recordingQuality.averageVolume}%{' '}
+                        {recordingQuality.averageVolume < 1 ? '(quite quiet)' : '(good)'}
+                      </div>
+                    )}
                   </div>
                   {!recordingQuality.hasGoodQuality && (
                     <div className="text-xs mt-2 font-medium">
-                      💡 Tip: {recordingQuality.duration < 30 ? 'Record for at least 30 seconds' : recordingQuality.duration > 300 ? 'Keep recordings under 5 minutes' : 'Speak louder or check your microphone'}
+                      You can still submit. Tip:{' '}
+                      {recordingQuality.duration < 10
+                        ? 'record a little longer if you can'
+                        : recordingQuality.duration > 300
+                          ? 'keep recordings under 5 minutes'
+                          : 'speak a bit louder or move closer to the mic'}
                     </div>
                   )}
                 </div>
@@ -561,7 +639,7 @@ export default function StudioPage() {
                 <Button
                   variant="primary"
                   size="sm"
-                  disabled={submitting || !!(recordingQuality && !recordingQuality.hasGoodQuality)}
+                  disabled={submitting || !audioUrl}
                   onClick={handleSubmitRecording}
                 >
                   {submitting ? 'Submitting...' : 'Submit Recording'}
