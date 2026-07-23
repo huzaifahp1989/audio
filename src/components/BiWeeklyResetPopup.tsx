@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 type BiWeeklyResetPopupProps = {
@@ -18,23 +18,35 @@ function getBiWeeklyPeriodIndex(nowMs: number) {
 
 export function BiWeeklyResetPopup({ pageKey }: BiWeeklyResetPopupProps) {
   const [periodIndex] = useState(() => getBiWeeklyPeriodIndex(Date.now()));
+  const [mounted, setMounted] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const popupStorageKey = useMemo(() => {
     return `kidszone-weekly-reset-popup:v6:${pageKey}:${periodIndex}`;
   }, [pageKey, periodIndex]);
-  const [open, setOpen] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return !window.localStorage.getItem(popupStorageKey);
-  });
+
+  // Open only after mount to avoid SSR/client hydration mismatch (Next.js issues overlay).
+  useEffect(() => {
+    setMounted(true);
+    try {
+      if (!window.localStorage.getItem(popupStorageKey)) {
+        setOpen(true);
+      }
+    } catch {
+      setOpen(true);
+    }
+  }, [popupStorageKey]);
 
   const closePopup = () => {
-    if (typeof window !== 'undefined') {
+    try {
       window.localStorage.setItem(popupStorageKey, 'seen');
+    } catch {
+      /* ignore */
     }
     setOpen(false);
   };
 
-  if (typeof document === 'undefined' || !open) return null;
+  if (!mounted || !open) return null;
 
   return createPortal(
     <div className="fixed inset-0 z-[10000] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">

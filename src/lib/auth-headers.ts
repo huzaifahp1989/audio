@@ -20,6 +20,18 @@ async function resolveAccessToken(timeoutMs = 2_500): Promise<string | null> {
   return readStoredAccessToken();
 }
 
+async function refreshSessionWithTimeout(timeoutMs = 3_000): Promise<boolean> {
+  try {
+    const result = await Promise.race([
+      supabase.auth.refreshSession(),
+      new Promise<'timeout'>((resolve) => setTimeout(() => resolve('timeout'), timeoutMs)),
+    ]);
+    return result !== 'timeout';
+  } catch {
+    return false;
+  }
+}
+
 export async function getAuthFetchHeaders(extra?: Record<string, string>): Promise<Record<string, string>> {
   const token = await resolveAccessToken();
   return {
@@ -46,14 +58,17 @@ export async function authJsonFetch(url: string, init: AuthJsonFetchOptions = {}
     let response = await fetch(url, { ...fetchInit, headers, signal: controller.signal });
 
     // One retry after refresh when the session token expired.
+    // refreshSession must be timed out — otherwise mobile can hang forever past the fetch abort.
     if (response.status === 401) {
       try {
-        await supabase.auth.refreshSession();
-        const retryHeaders = await getAuthFetchHeaders({
-          'Content-Type': 'application/json',
-          ...(fetchInit.headers as Record<string, string> | undefined),
-        });
-        response = await fetch(url, { ...fetchInit, headers: retryHeaders, signal: controller.signal });
+        const refreshed = await refreshSessionWithTimeout(3_000);
+        if (refreshed) {
+          const retryHeaders = await getAuthFetchHeaders({
+            'Content-Type': 'application/json',
+            ...(fetchInit.headers as Record<string, string> | undefined),
+          });
+          response = await fetch(url, { ...fetchInit, headers: retryHeaders, signal: controller.signal });
+        }
       } catch {
         /* keep original 401 */
       }

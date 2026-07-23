@@ -1,24 +1,29 @@
 import { randomUUID } from 'crypto'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 
-function hashString(input: string): number {
-  let h = 2166136261
-  for (let i = 0; i < input.length; i++) {
-    h ^= input.charCodeAt(i)
-    h = Math.imul(h, 16777619)
-  }
-  return h >>> 0
-}
-
 /**
  * Map each quiz session to a unique synthetic DATE key (2096+) so we never
  * collide with legacy shared daily_quizzes rows or UNIQUE(user_id, quiz_id).
+ *
+ * Uses time + random entropy so concurrent submits almost never collide on
+ * UNIQUE(quiz_date) — the previous hash space was only ~1.3k dates and caused
+ * recursive insert retries that slowed quiz finish.
  */
 export function getSessionQuizStorageDate(sessionKey: string): string {
-  const hash = hashString(sessionKey)
-  const year = 2096 + (hash % 4)
-  const month = (hash % 12) + 1
-  const day = (hash % 28) + 1
+  const now = Date.now()
+  // Spread across many years/days; mix in sessionKey length for extra entropy.
+  const mix = (now ^ (sessionKey.length * 2654435761)) >>> 0
+  const year = 2096 + (mix % 7900)
+  const month = (mix % 12) + 1
+  const day = ((mix >>> 8) % 28) + 1
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+}
+
+function nextStorageDate(attempt: number): string {
+  const n = (Date.now() + attempt * 9973 + Math.floor(Math.random() * 1_000_000)) >>> 0
+  const year = 2096 + (n % 7900)
+  const month = (n % 12) + 1
+  const day = ((n >>> 7) % 28) + 1
   return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
 }
 
@@ -28,27 +33,32 @@ export async function createSessionQuizRecordId(
   questionIds: string[],
   sessionKey: string = randomUUID()
 ): Promise<string> {
-  const storageDate = getSessionQuizStorageDate(sessionKey)
   const taggedQuestionIds = [`topic:${topicId}`, `session:${sessionKey}`, ...questionIds.map(String)]
 
-  const { data: inserted, error: insertErr } = await supabaseAdmin
-    .from('daily_quizzes')
-    .insert({
-      quiz_date: storageDate,
-      question_ids: taggedQuestionIds,
-      is_published: false,
-    })
-    .select('id')
-    .single()
+  // Cap retries — never recurse unboundedly on UNIQUE collisions.
+  for (let attempt = 0; attempt < 6; attempt++) {
+    const storageDate = attempt === 0 ? getSessionQuizStorageDate(sessionKey) : nextStorageDate(attempt)
 
-  if (!insertErr && inserted?.id) {
-    return inserted.id
+    const { data: inserted, error: insertErr } = await supabaseAdmin
+      .from('daily_quizzes')
+      .insert({
+        quiz_date: storageDate,
+        question_ids: taggedQuestionIds,
+        is_published: false,
+      })
+      .select('id')
+      .single()
+
+    if (!insertErr && inserted?.id) {
+      return inserted.id
+    }
+
+    if (insertErr?.code === '23505') {
+      continue
+    }
+
+    throw new Error(insertErr?.message || 'Could not create quiz session record')
   }
 
-  // Extremely unlikely collision on synthetic date — retry with fresh session key.
-  if (insertErr?.code === '23505') {
-    return createSessionQuizRecordId(topicId, questionIds, randomUUID())
-  }
-
-  throw new Error(insertErr?.message || 'Could not create quiz session record')
+  throw new Error('Could not create quiz session record after retries')
 }
