@@ -292,6 +292,8 @@ export async function POST(req: Request) {
       const isCompletedTopic = activeQuestions.every((q: any) => Object.prototype.hasOwnProperty.call(answers, String(q.id)));
       const totalPoints = isCompletedTopic ? QUIZ_POINTS_PER_COMPLETION : 0;
 
+      // Insert attempt and award points as soon as we have a session quiz id.
+      // (Award still waits on insert success so duplicates don't double-credit.)
       const { error: attemptError } = await insertQuizAttempt({
         user_id: userId,
         quiz_id: resolvedSessionQuizRecordId,
@@ -321,12 +323,15 @@ export async function POST(req: Request) {
         throw attemptError;
       }
 
-      const awardResult = await awardQuizPoints(userId, totalPoints, isTestMode);
+      // Build attempt summary from the count we already fetched — avoid a second COUNT query.
+      const [awardResult, attemptSummary] = await Promise.all([
+        awardQuizPoints(userId, totalPoints, isTestMode),
+        isTestMode
+          ? getTodaysQuizAttemptSummary(userId)
+          : Promise.resolve(attemptSummaryFromCount(priorAttemptsToday + 1)),
+      ]);
 
       const finalPointsAwarded = awardResult.pointsAwarded;
-      const attemptSummary = isTestMode
-        ? await getTodaysQuizAttemptSummary(userId)
-        : attemptSummaryFromCount(priorAttemptsToday + 1);
       const awardMessage = isTestMode
         ? 'Test mode active. Quiz recorded, but no leaderboard points were added.'
         : finalPointsAwarded > 0

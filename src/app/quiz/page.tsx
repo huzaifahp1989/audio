@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { BiWeeklyResetPopup } from '@/components';
 import { DailyPointsBar } from '@/components/DailyPointsBar';
 import { usePointsProgress } from '@/lib/points-progress-context';
 import { MAX_DAILY_QUIZ_ATTEMPTS, QUIZ_POINTS_PER_COMPLETION, POINTS_DAILY_CAP, MAX_DAILY_QUIZ_POINTS } from '@/lib/points-policy';
@@ -14,7 +13,7 @@ import { getQuizQuestionPool } from '@/lib/quiz-question-pool';
 import { QUIZ_TOPICS, QUIZ_TOPIC_GROUPS, getTopicById, getTopicQuestionCount, getDailyTopicSeed, type QuizTopicId } from '@/lib/quiz-topics';
 import { ReadAloudButton } from '@/components/ReadAloudButton';
 import { EarnMorePointsLinks } from '@/components/EarnMorePointsLinks';
-import { authJsonFetch, getAuthFetchHeaders } from '@/lib/auth-headers';
+import { authJsonFetch } from '@/lib/auth-headers';
 import { trackQuizCompleted } from '@/lib/analytics';
 
 const quizPool = getQuizQuestionPool();
@@ -274,7 +273,7 @@ export default function QuizPage() {
     try {
       const res = await authJsonFetch('/api/quiz/daily/submit', {
         method: 'POST',
-        timeoutMs: 25_000,
+        timeoutMs: 15_000,
         body: JSON.stringify({
           userId: user?.id,
           quizId: activeQuizId || `topic-${selectedTopic}-${todaySeed}-${user.id}`,
@@ -419,7 +418,6 @@ export default function QuizPage() {
   if (!mounted) {
     return (
       <>
-        <BiWeeklyResetPopup pageKey="quiz" />
         <div className="min-h-[70vh] flex items-center justify-center bg-[#f5f3ff]">
           <div className="text-[#475569]">Loading...</div>
         </div>
@@ -430,7 +428,6 @@ export default function QuizPage() {
   if (!mode) {
     return (
       <>
-      <BiWeeklyResetPopup pageKey="quiz" />
       <div className="min-h-screen bg-[#f5f3ff] pattern-islamic">
         <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
           {/* Islamic Quiz Challenge — shown at the very top so it is easy to find */}
@@ -693,7 +690,6 @@ export default function QuizPage() {
   // Quiz Interface
   return (
     <>
-    <BiWeeklyResetPopup pageKey="quiz" />
     <div className="min-h-screen bg-[#f5f3ff] py-8 px-4">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
@@ -859,7 +855,12 @@ export default function QuizPage() {
               <div className="space-y-4 mb-8">
                   <div className="bg-[#f5f3ff] rounded-xl p-4">
                     <p className="text-sm text-[#6d28d9] font-semibold uppercase tracking-wide">Your Score</p>
-                    <p className="text-4xl font-bold text-[#7c3aed]">{dailyResult?.score} / {currentQuestions.length}</p>
+                    <p className="text-4xl font-bold text-[#7c3aed]">
+                      {Math.round(Number(dailyResult?.score ?? 0) / 10)} / {currentQuestions.length}
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-[#6d28d9]">
+                      {dailyResult?.score ?? 0} points
+                    </p>
                   </div>
 
                   {dailyResult?.streak > 0 && (
