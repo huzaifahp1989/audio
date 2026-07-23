@@ -5,6 +5,7 @@ export * from './FeatureDiscover';
 export * from './WhatsNew';
 export * from './WhatsNewFeaturesPopup';
 export * from './EarnMorePointsLinks';
+export * from './RecordAndEarnBanner';
 export * from './FeedbackBanner';
 export * from './Modal';
 export * from './Mascot';

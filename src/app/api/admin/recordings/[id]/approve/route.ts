@@ -3,6 +3,23 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { ensureUserRecords } from '@/lib/ensure-user-records';
 import { awardPointsWithDailyCapByUserId } from '@/lib/server-points';
 
+async function updateRecordingReview(
+  id: string,
+  fields: Record<string, unknown>,
+  feedback: string | undefined
+) {
+  const withNotes = feedback !== undefined ? { ...fields, admin_notes: feedback } : fields;
+  let { error } = await supabaseAdmin.from('recordings').update(withNotes).eq('id', id);
+
+  // Older schemas use admin_feedback instead of admin_notes
+  if (error && feedback !== undefined && error.message?.includes('admin_notes')) {
+    const withFeedback = { ...fields, admin_feedback: feedback };
+    ({ error } = await supabaseAdmin.from('recordings').update(withFeedback).eq('id', id));
+  }
+
+  return error;
+}
+
 export async function POST(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
@@ -12,16 +29,16 @@ export async function POST(
     const body = await request.json();
     const { points, publish, feedback } = body;
 
-    const { error: updateError } = await supabaseAdmin
-      .from('recordings')
-      .update({
+    const updateError = await updateRecordingReview(
+      id,
+      {
         status: 'approved',
         points_awarded: points,
-        admin_notes: feedback,
         is_published: publish,
         reviewed_at: new Date().toISOString(),
-      })
-      .eq('id', id);
+      },
+      typeof feedback === 'string' ? feedback : undefined
+    );
 
     if (updateError) {
       return NextResponse.json({ error: updateError.message }, { status: 500 });

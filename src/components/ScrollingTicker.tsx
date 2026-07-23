@@ -3,6 +3,7 @@
 import React from 'react';
 
 const messages = [
+  "🎙️ Record Quran, nasheeds, stories & hadith — click here and earn points!",
   "🌟 Play today's quiz and earn points!",
   "🕌 Learn a new Surah every day!",
   "🏆 Check the leaderboard — can you reach the top?",

@@ -284,15 +284,27 @@ export default function TasksPage() {
                 <p>Use this recorder to record Quran recitation, nasheeds, Islamic stories, Hadith and more.</p>
                 <p className="font-semibold text-purple-700">We will check your recordings and give more points!</p>
               </div>
-              <div className="mt-5">
+              <div className="mt-5 flex flex-wrap gap-3">
+                <Link
+                  href="/studio"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-purple-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-purple-700"
+                >
+                  <Mic size={18} />
+                  Click here &amp; earn points
+                </Link>
+                <Link
+                  href="/my-recordings"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-purple-200 bg-white px-5 py-3 text-sm font-bold text-purple-900 transition hover:bg-purple-50"
+                >
+                  My Recordings
+                </Link>
                 <a
                   href="https://create-me-a-audio.vercel.app/kids-record"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-purple-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-purple-700"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-purple-200 bg-purple-50 px-5 py-3 text-sm font-bold text-purple-800 transition hover:bg-purple-100"
                 >
-                  <Mic size={18} />
-                  Open Recorder
+                  Open External Recorder
                 </a>
               </div>
             </div>

@@ -6,7 +6,7 @@ import { Button } from '@/components';
 import { useAuth } from '@/lib/auth-context';
 import { trackQuranRecordingSubmitted } from '@/lib/analytics';
 
-type Category = 'quran' | 'nasheed' | 'story';
+type Category = 'quran' | 'nasheed' | 'story' | 'hadith';
 
 type StudioState = 'idle' | 'recording' | 'paused' | 'finished';
 
@@ -355,8 +355,8 @@ export default function StudioPage() {
             🎙️ Kids Recording Studio
           </h1>
           <p className="text-slate-600 max-w-2xl mx-auto">
-            Record your Qur&apos;an recitation, nasheeds, or stories using your microphone.
-            Listen back and submit to your teacher.
+            Record your Qur&apos;an recitation, nasheeds, stories, or hadith using your microphone.
+            Listen back and submit to your teacher for points.
           </p>
         </div>
 
@@ -388,6 +388,13 @@ export default function StudioPage() {
                     onClick={() => setCategory('story')}
                   >
                     📚 Story
+                  </Button>
+                  <Button
+                    variant={category === 'hadith' ? 'primary' : 'outline'}
+                    size="sm"
+                    onClick={() => setCategory('hadith')}
+                  >
+                    📜 Hadith
                   </Button>
                 </div>
               </div>

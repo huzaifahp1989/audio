@@ -12,6 +12,14 @@ export type WhatsNewItem = {
 /** Featured new / easy-to-miss activities kids should discover. */
 export const WHATS_NEW_ITEMS: WhatsNewItem[] = [
   {
+    href: '/studio',
+    emoji: '🎙️',
+    title: 'Record & Earn',
+    blurb: 'Record Quran, nasheeds, stories & hadith — click here and earn points',
+    badge: 'NEW',
+    pointsHint: '+20–40',
+  },
+  {
     href: '/create',
     emoji: '🎨',
     title: 'Create & Play',
@@ -75,6 +83,14 @@ export const WHATS_NEW_ITEMS: WhatsNewItem[] = [
 
 /** Extra earn / explore links shown on Quiz / Games / Pledge. */
 export const EARN_MORE_LINKS: WhatsNewItem[] = [
+  {
+    href: '/studio',
+    emoji: '🎙️',
+    title: 'Record & Earn',
+    blurb: 'Quran, nasheeds, stories & hadith',
+    badge: 'NEW',
+    pointsHint: '+20–40',
+  },
   {
     href: '/create',
     emoji: '🎨',

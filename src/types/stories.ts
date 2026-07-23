@@ -23,7 +23,9 @@ export interface Recording {
   admin_feedback?: string | null;
   is_published: boolean;
   submitted_at?: string;
+  reviewed_at?: string | null;
   created_at?: string;
+  category?: 'quran' | 'nasheed' | 'story' | 'hadith' | string | null;
 
   // Studio fields
   title?: string;

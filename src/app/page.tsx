@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
 import { useAgeMode } from '@/lib/age-mode';
-import { BookOpen, Gamepad2, Sparkles, Star, Target, Zap, Trophy, Coins } from 'lucide-react';
+import { BookOpen, Gamepad2, Mic, Sparkles, Star, Target, Zap, Trophy, Coins } from 'lucide-react';
 import DailyMissions from '@/components/DailyMissions';
 import { ComeBackNudge } from '@/components/ComeBackNudge';
 import { WeeklyChallengeCard } from '@/components/WeeklyChallengeCard';
@@ -14,6 +14,7 @@ import ReferralTokenHub from '@/components/ReferralTokenHub';
 import KidsZoneFeatureLab from '@/components/KidsZoneFeatureLab';
 import { FeatureDiscover } from '@/components/FeatureDiscover';
 import { WhatsNew } from '@/components/WhatsNew';
+import { RecordAndEarnBanner } from '@/components/RecordAndEarnBanner';
 import { Mascot } from '@/components/Mascot';
 import { ReadAloudButton } from '@/components/ReadAloudButton';
 import { PointsSummaryWidget } from '@/components/PointsSummaryWidget';
@@ -52,6 +53,7 @@ export default function Home() {
         <RamadanPopup />
         <div className="page-wrap space-y-6">
           <WhatsNew />
+          <RecordAndEarnBanner />
           <section className="hero-panel stagger-in">
             <div className="relative flex flex-col items-center gap-5 px-5 py-8 text-center md:flex-row md:items-center md:justify-between md:text-left">
               <div className="space-y-3">
@@ -70,6 +72,12 @@ export default function Home() {
                     className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-teal-600 to-teal-800 px-6 py-3.5 text-base font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
                   >
                     <BookOpen size={20} /> Start Quiz
+                  </Link>
+                  <Link
+                    href="/studio"
+                    className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 px-6 py-3.5 text-base font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
+                  >
+                    <Mic size={20} /> Record &amp; Earn
                   </Link>
                   <Link
                     href="/games"
@@ -136,6 +144,7 @@ export default function Home() {
       <RamadanPopup />
       <div className="page-wrap space-y-7">
         <WhatsNew />
+        <RecordAndEarnBanner />
         <section className="hero-panel stagger-in">
           <div className="relative px-6 py-9 md:px-10 md:py-11">
             <div className="flex flex-col items-start gap-6 md:flex-row md:items-center md:justify-between">
@@ -156,6 +165,13 @@ export default function Home() {
                   >
                     <BookOpen size={20} />
                     Daily Quiz
+                  </Link>
+                  <Link
+                    href="/studio"
+                    className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 px-6 py-3 font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
+                  >
+                    <Mic size={20} />
+                    Record &amp; Earn
                   </Link>
                   <Link
                     href="/games"
