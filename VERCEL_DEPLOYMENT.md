@@ -21,6 +21,8 @@ NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
+For local `.env.local`, leave those two values blank until you have real Supabase credentials. The app falls back safely in development. In Vercel, set the real values in Project Settings -> Environment Variables.
+
 ### Optional Environment Variables
 
 ```bash

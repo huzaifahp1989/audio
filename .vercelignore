@@ -6,3 +6,11 @@ dist
 .trae
 .log
 .figma
+android
+ios
+www
+scripts
+supabase/functions
+supabase/migrations
+*.md
+*.txt

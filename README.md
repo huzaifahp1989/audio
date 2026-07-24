@@ -18,7 +18,7 @@ A fun, safe, and educational Islamic learning platform for children aged 5-14.
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 22.x recommended
 - Firebase Project
 - npm or yarn
 
@@ -33,8 +33,8 @@ npm install
 Create a `.env.local` file in the root directory:
 
 ```
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 
 NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
@@ -44,6 +44,8 @@ NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_storage_bucket
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
 NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
 ```
+
+Leave `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` blank locally until you have real credentials. The app falls back to a safe placeholder client for local/dev. In Vercel, set the real values in Project Settings -> Environment Variables.
 
 ### Supabase Device Compatibility Checklist
 

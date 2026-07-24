@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "A child-friendly Islamic learning website for kids aged 5-14",
   "private": true,
+  "packageManager": "npm@11.4.2",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "dev": "next dev -H 0.0.0.0 -p 3000",
     "build": "next build",
