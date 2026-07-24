@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { CalendarDays, ChevronRight, Trophy } from 'lucide-react';
+import { CalendarDays, ChevronRight, Filter, Trophy } from 'lucide-react';
 import {
   formatWeekLabel,
   groupWinnersByMonth,
@@ -14,6 +14,7 @@ export default function WinnersPage() {
   const [winners, setWinners] = useState<WeeklyWinnerAnnouncement[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState<'all' | number>('all');
+  const [selectedMonthKey, setSelectedMonthKey] = useState<'all' | string>('all');
 
   useEffect(() => {
     let active = true;
@@ -42,14 +43,27 @@ export default function WinnersPage() {
     [monthGroups]
   );
 
-  const visibleMonths = useMemo(() => {
+  const monthsForSelectedYear = useMemo(() => {
     if (selectedYear === 'all') return monthGroups;
     return monthGroups.filter((group) => group.year === selectedYear);
   }, [monthGroups, selectedYear]);
 
+  const visibleMonths = useMemo(() => {
+    const yearFiltered = selectedYear === 'all' ? monthGroups : monthGroups.filter((group) => group.year === selectedYear);
+    if (selectedMonthKey === 'all') return yearFiltered;
+    return yearFiltered.filter((group) => group.monthKey === selectedMonthKey);
+  }, [monthGroups, selectedMonthKey, selectedYear]);
+
   const totalMonths = monthGroups.length;
   const totalEntries = winners.length;
   const latestMonth = monthGroups[0]?.label ?? null;
+  const visibleWinnerCount = visibleMonths.reduce((sum, group) => sum + group.winners.length, 0);
+
+  useEffect(() => {
+    if (selectedMonthKey === 'all') return;
+    const exists = monthsForSelectedYear.some((group) => group.monthKey === selectedMonthKey);
+    if (!exists) setSelectedMonthKey('all');
+  }, [monthsForSelectedYear, selectedMonthKey]);
 
   return (
     <div className="page-inner">
@@ -60,10 +74,10 @@ export default function WinnersPage() {
               <div className="inline-flex items-center gap-2 rounded-full bg-violet-100 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-violet-800">
                 <Trophy size={14} /> Kids Zone Winners
               </div>
-              <h1 className="mt-3 text-3xl font-black text-slate-900 md:text-4xl">Previous winners by month and year</h1>
+              <h1 className="mt-3 text-3xl font-black text-slate-900 md:text-4xl">Previous Kids Zone winners</h1>
               <p className="mt-2 text-sm leading-6 text-slate-600 md:text-base">
-                Browse the Kids Zone winners archive grouped by month and year, with each winning week shown inside
-                every month.
+                Browse the archive by month and year. Each monthly section shows the winning weeks and the children
+                announced in that month.
               </p>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row">
@@ -99,29 +113,59 @@ export default function WinnersPage() {
         </section>
 
         <section className="mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => setSelectedYear('all')}
-              className={`rounded-full px-4 py-2 text-sm font-bold transition ${
-                selectedYear === 'all' ? 'bg-violet-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-violet-50'
-              }`}
-            >
-              All years
-            </button>
-            {years.map((year) => (
+          <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
+            <Filter size={16} className="text-violet-600" />
+            Filter archive
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {([
+              { key: 'all', label: 'All years' },
+              ...years.map((year) => ({ key: String(year), label: String(year) })),
+            ]).map((item) => (
               <button
-                key={year}
+                key={item.key}
                 type="button"
-                onClick={() => setSelectedYear(year)}
+                onClick={() => setSelectedYear(item.key === 'all' ? 'all' : Number(item.key))}
                 className={`rounded-full px-4 py-2 text-sm font-bold transition ${
-                  selectedYear === year ? 'bg-violet-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-violet-50'
+                  (item.key === 'all' ? selectedYear === 'all' : selectedYear === Number(item.key))
+                    ? 'bg-violet-600 text-white'
+                    : 'bg-slate-100 text-slate-700 hover:bg-violet-50'
                 }`}
               >
-                {year}
+                {item.label}
               </button>
             ))}
           </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setSelectedMonthKey('all')}
+              className={`rounded-full px-4 py-2 text-sm font-bold transition ${
+                selectedMonthKey === 'all' ? 'bg-sky-600 text-white' : 'bg-sky-50 text-sky-800 hover:bg-sky-100'
+              }`}
+            >
+              All months
+            </button>
+            {monthsForSelectedYear.map((group) => (
+              <button
+                key={group.monthKey}
+                type="button"
+                onClick={() => setSelectedMonthKey(group.monthKey)}
+                className={`rounded-full px-4 py-2 text-sm font-bold transition ${
+                  selectedMonthKey === group.monthKey
+                    ? 'bg-sky-600 text-white'
+                    : 'bg-sky-50 text-sky-800 hover:bg-sky-100'
+                }`}
+              >
+                {group.label}
+              </button>
+            ))}
+          </div>
+          <p className="mt-4 text-sm text-slate-600">
+            Showing <span className="font-bold text-slate-900">{visibleMonths.length}</span> month
+            {visibleMonths.length === 1 ? '' : 's'} and <span className="font-bold text-slate-900">{visibleWinnerCount}</span>{' '}
+            winner entry{visibleWinnerCount === 1 ? '' : 'ies'}.
+          </p>
         </section>
 
         {loading ? (
@@ -135,6 +179,37 @@ export default function WinnersPage() {
           </section>
         ) : (
           <div className="space-y-6 pb-10">
+            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex items-center gap-2">
+                <CalendarDays className="text-violet-600" size={18} />
+                <h2 className="text-xl font-black text-slate-900">Monthly archive</h2>
+              </div>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {visibleMonths.map((group) => {
+                  const weekCount = groupWinnersByWeek(group.winners).length;
+                  return (
+                    <button
+                      key={`summary-${group.monthKey}`}
+                      type="button"
+                      onClick={() => setSelectedMonthKey(group.monthKey)}
+                      className={`rounded-2xl border p-4 text-left transition ${
+                        selectedMonthKey === group.monthKey
+                          ? 'border-violet-300 bg-violet-50 shadow-sm'
+                          : 'border-slate-200 bg-slate-50 hover:border-violet-200 hover:bg-violet-50/60'
+                      }`}
+                    >
+                      <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-700">{group.year}</p>
+                      <h3 className="mt-2 text-lg font-black text-slate-900">{group.label}</h3>
+                      <p className="mt-2 text-sm text-slate-600">
+                        {group.winners.length} winner{group.winners.length === 1 ? '' : 's'} across {weekCount} week
+                        {weekCount === 1 ? '' : 's'}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+
             {visibleMonths.map((monthGroup) => {
               const weeks = groupWinnersByWeek(monthGroup.winners);
 
@@ -149,6 +224,9 @@ export default function WinnersPage() {
                         <CalendarDays size={14} /> {monthGroup.year}
                       </div>
                       <h2 className="mt-3 text-2xl font-black text-slate-900">{monthGroup.label}</h2>
+                      <p className="mt-1 text-sm text-slate-600">
+                        Monthly winner archive for {monthGroup.label}.
+                      </p>
                     </div>
                     <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-600">
                       {monthGroup.winners.length} winner{monthGroup.winners.length === 1 ? '' : 's'} across {weeks.length} week

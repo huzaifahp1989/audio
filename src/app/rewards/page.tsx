@@ -368,9 +368,9 @@ export default function RewardsPage() {
             </Link>
           </div>
           <div className="mt-4 rounded-2xl border border-violet-100 bg-white/70 px-4 py-3 text-sm text-violet-900">
-            Want to see past Kids Zone winners?{' '}
+            Want to see previous Kids Zone winners by month and year?{' '}
             <Link href="/winners" className="font-bold text-violet-700 hover:text-violet-800">
-              Open the monthly winners archive →
+              Open the previous winners page →
             </Link>
           </div>
         </section>

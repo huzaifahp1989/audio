@@ -269,9 +269,9 @@ export const NAV_GROUPS: NavGroup[] = [
       },
       {
         href: '/winners',
-        label: 'Past Winners',
+        label: 'Previous Winners',
         shortLabel: 'Winners',
-        description: 'See previous Kids Zone winners by month',
+        description: 'Browse Kids Zone winners by month and year',
         icon: Trophy,
         group: 'rewards',
       },
