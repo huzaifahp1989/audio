@@ -367,6 +367,12 @@ export default function RewardsPage() {
               Monthly leaderboard →
             </Link>
           </div>
+          <div className="mt-4 rounded-2xl border border-violet-100 bg-white/70 px-4 py-3 text-sm text-violet-900">
+            Want to see past Kids Zone winners?{' '}
+            <Link href="/winners" className="font-bold text-violet-700 hover:text-violet-800">
+              Open the monthly winners archive →
+            </Link>
+          </div>
         </section>
 
         <section className="mb-6 rounded-3xl border border-indigo-200 bg-gradient-to-br from-indigo-50 via-white to-cyan-50 p-6 shadow-sm">

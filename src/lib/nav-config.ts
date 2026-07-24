@@ -267,6 +267,14 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: HelpCircle,
         group: 'rewards',
       },
+      {
+        href: '/winners',
+        label: 'Past Winners',
+        shortLabel: 'Winners',
+        description: 'See previous Kids Zone winners by month',
+        icon: Trophy,
+        group: 'rewards',
+      },
     ],
   },
 ];
