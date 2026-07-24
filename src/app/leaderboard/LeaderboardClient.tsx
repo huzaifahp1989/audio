@@ -6,6 +6,7 @@ import { usePresence } from '@/lib/presence-context';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { Trophy, Sparkles, Star, MessageCircle, Coins, CalendarDays } from 'lucide-react';
+import { formatWeekLabel, groupWinnersByWeek, type WeeklyWinnerAnnouncement } from '@/lib/weekly-winner-display';
 
 import {
   getWeeklyDrawPointsRemaining,
@@ -64,6 +65,8 @@ type Row = {
 export default function LeaderboardClient() {
   const [activeTab, setActiveTab] = useState<LeaderboardTab>('weekly');
   const [entries, setEntries] = useState<Entry[]>([]);
+  const [winnerAnnouncements, setWinnerAnnouncements] = useState<WeeklyWinnerAnnouncement[]>([]);
+  const [winnersLoading, setWinnersLoading] = useState(true);
   const { onlineUserIds } = usePresence();
   const [loading, setLoading] = useState(true);
   const { profile } = useAuth();
@@ -96,6 +99,27 @@ export default function LeaderboardClient() {
   useEffect(() => {
     loadLeaderboard();
   }, [loadLeaderboard]);
+
+  useEffect(() => {
+    let active = true;
+
+    fetch('/api/weekly-winners', { cache: 'no-store' })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!active) return;
+        setWinnerAnnouncements(Array.isArray(data?.winners) ? data.winners : []);
+      })
+      .catch(() => {
+        if (active) setWinnerAnnouncements([]);
+      })
+      .finally(() => {
+        if (active) setWinnersLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     const channel = supabase
@@ -138,6 +162,10 @@ export default function LeaderboardClient() {
     if (!uid) return -1;
     return leaderboardData.findIndex((entry) => entry.uid === uid);
   }, [leaderboardData, profile?.uid]);
+
+  const previousWinnerWeeks = useMemo(() => {
+    return groupWinnersByWeek(winnerAnnouncements).slice(0, 6);
+  }, [winnerAnnouncements]);
 
   const myRow = myRankIndex >= 0 ? leaderboardData[myRankIndex] : null;
 
@@ -206,6 +234,20 @@ export default function LeaderboardClient() {
               ? 'See who has earned the most points this month'
               : 'See who is most active this week — winners are picked by random draw, not rank'}
           </p>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <a
+              href="#previous-winners"
+              className="inline-flex items-center justify-center rounded-xl border border-violet-200 bg-white px-4 py-2 text-sm font-bold text-violet-700 shadow-sm transition hover:bg-violet-50"
+            >
+              Previous winners
+            </a>
+            <Link
+              href="/guide"
+              className="inline-flex items-center justify-center rounded-xl border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-bold text-sky-800 shadow-sm transition hover:bg-sky-100"
+            >
+              How to win
+            </Link>
+          </div>
         </div>
 
         <div className="mx-auto flex max-w-md rounded-2xl border border-[#c4b5fd]/40 bg-white p-1 shadow-sm">
@@ -305,6 +347,62 @@ export default function LeaderboardClient() {
             </p>
           </div>
         )}
+
+        <section
+          id="previous-winners"
+          className="scroll-mt-24 rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 via-white to-yellow-50 p-5 shadow-sm"
+        >
+          <div className="flex flex-col gap-2 text-center sm:text-left">
+            <div className="inline-flex items-center gap-2 self-center rounded-full bg-white px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-amber-700 shadow-sm sm:self-start">
+              <span aria-hidden>🏆</span>
+              Previous winners
+            </div>
+            <div className="sm:flex sm:items-end sm:justify-between">
+              <div>
+                <h2 className="text-2xl font-black text-slate-900">Past weekly winners</h2>
+                <p className="mt-1 text-sm text-slate-600">
+                  See who was picked in recent weekly draws.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {winnersLoading ? (
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {[1, 2, 3, 4].map((item) => (
+                <div key={item} className="h-24 animate-pulse rounded-2xl bg-white/80" />
+              ))}
+            </div>
+          ) : previousWinnerWeeks.length > 0 ? (
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {previousWinnerWeeks.map((week) => {
+                const winnerNames = week.winners.map((winner) => winner.winner_name).join(' & ');
+                const madrasahNames = week.winners
+                  .map((winner) => winner.madrasah_name)
+                  .filter(Boolean)
+                  .join(' · ');
+
+                return (
+                  <div key={week.weekStartDate} className="rounded-2xl border border-amber-100 bg-white p-4 shadow-sm">
+                    <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-700">
+                      {formatWeekLabel(week.weekStartDate)}
+                    </p>
+                    <p className="mt-2 text-lg font-black text-slate-900">{winnerNames}</p>
+                    {madrasahNames ? (
+                      <p className="mt-1 text-sm font-semibold text-slate-600">{madrasahNames}</p>
+                    ) : (
+                      <p className="mt-1 text-sm text-slate-500">Winner announcement</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="mt-4 rounded-2xl border border-dashed border-amber-200 bg-white/80 px-4 py-5 text-center text-sm font-semibold text-slate-600">
+              Previous winners will appear here once weekly draws have been announced.
+            </div>
+          )}
+        </section>
 
         <div className="text-center">
           <div className="flex flex-wrap items-center justify-center gap-3">
