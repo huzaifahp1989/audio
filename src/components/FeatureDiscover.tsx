@@ -1,7 +1,13 @@
 'use client';
 
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { CHAT_ITEM, NAV_GROUPS, type NavGroupId } from '@/lib/nav-config';
+import {
+  CHAT_ITEM,
+  getRuntimeNavGroups,
+  isFitnessChallengeAvailableInCurrentRuntime,
+  type NavGroupId,
+} from '@/lib/nav-config';
 import { NavCard } from '@/components/NavCard';
 
 type FeatureDiscoverProps = {
@@ -52,8 +58,18 @@ const YOUNGER_COLOR_ROTATION: Array<'blue' | 'green' | 'yellow' | 'pink' | 'purp
  * Home discoverability hub — driven by NAV_GROUPS so links never drift from the navbar.
  */
 export function FeatureDiscover({ variant = 'older' }: FeatureDiscoverProps) {
+  const [showFitnessChallenge, setShowFitnessChallenge] = useState(false);
+  const visibleGroups = useMemo(
+    () => getRuntimeNavGroups(showFitnessChallenge),
+    [showFitnessChallenge]
+  );
+
+  useEffect(() => {
+    setShowFitnessChallenge(isFitnessChallengeAvailableInCurrentRuntime());
+  }, []);
+
   if (variant === 'younger') {
-    const tiles = NAV_GROUPS.flatMap((group, groupIndex) =>
+    const tiles = visibleGroups.flatMap((group, groupIndex) =>
       group.items.map((item, itemIndex) => ({
         href: item.href,
         icon: YOUNGER_EMOJI[item.href] || group.emoji,
@@ -101,7 +117,7 @@ export function FeatureDiscover({ variant = 'older' }: FeatureDiscoverProps) {
       </div>
 
       <div className="space-y-5">
-        {NAV_GROUPS.map((group) => {
+        {visibleGroups.map((group) => {
           const accent = GROUP_ACCENT[group.id];
           return (
             <div

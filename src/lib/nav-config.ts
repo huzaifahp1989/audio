@@ -41,6 +41,8 @@ export interface NavGroup {
   items: NavItem[];
 }
 
+export const FITNESS_NAV_HREF = '/fitness';
+
 /** Standalone links that sit outside the grouped dropdowns. */
 export const HOME_ITEM: NavItem = {
   href: '/',
@@ -216,7 +218,7 @@ export const NAV_GROUPS: NavGroup[] = [
         href: '/fitness',
         label: 'Fitness Challenge',
         shortLabel: 'Fitness',
-        description: 'Walk every day, earn points and badges',
+        description: 'Walk every day in the app to earn points and badges',
         icon: Footprints,
         group: 'track',
       },
@@ -314,4 +316,31 @@ export function isNavActive(pathname: string | null | undefined, href: string): 
 
 export function isGroupActive(pathname: string | null | undefined, group: NavGroup): boolean {
   return group.items.some((item) => isNavActive(pathname, item.href));
+}
+
+export function isFitnessChallengeAvailableInCurrentRuntime(): boolean {
+  if (typeof window === 'undefined') return false;
+
+  const runtime = window as Window & {
+    Capacitor?: {
+      isNativePlatform?: () => boolean;
+      getPlatform?: () => string;
+    };
+  };
+
+  if (typeof runtime.Capacitor?.isNativePlatform === 'function') {
+    return runtime.Capacitor.isNativePlatform();
+  }
+
+  const platform = runtime.Capacitor?.getPlatform?.();
+  return platform === 'android' || platform === 'ios';
+}
+
+export function getRuntimeNavGroups(includeFitnessChallenge: boolean): NavGroup[] {
+  return NAV_GROUPS
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => includeFitnessChallenge || item.href !== FITNESS_NAV_HREF),
+    }))
+    .filter((group) => group.items.length > 0);
 }

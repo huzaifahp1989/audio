@@ -7,8 +7,9 @@ import { useAuth } from '@/lib/auth-context';
 import {
   BOTTOM_TABS,
   CHAT_ITEM,
+  getRuntimeNavGroups,
   HOME_ITEM,
-  NAV_GROUPS,
+  isFitnessChallengeAvailableInCurrentRuntime,
   isNavActive,
 } from '@/lib/nav-config';
 
@@ -18,6 +19,11 @@ export const MobileBottomNav = () => {
   const { user, profile, logout } = useAuth();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [showFitnessChallenge, setShowFitnessChallenge] = useState(false);
+  const visibleGroups = React.useMemo(
+    () => getRuntimeNavGroups(showFitnessChallenge),
+    [showFitnessChallenge]
+  );
 
   // Close the sheet whenever the route changes.
   useEffect(() => {
@@ -34,8 +40,12 @@ export const MobileBottomNav = () => {
     };
   }, [isSheetOpen]);
 
+  useEffect(() => {
+    setShowFitnessChallenge(isFitnessChallengeAvailableInCurrentRuntime());
+  }, []);
+
   const displayName = profile?.name;
-  const menuActive = isSheetOpen || NAV_GROUPS.some((g) =>
+  const menuActive = isSheetOpen || visibleGroups.some((g) =>
     g.items.some((i) => !BOTTOM_TABS.includes(i) && isNavActive(pathname, i.href))
   ) || isNavActive(pathname, CHAT_ITEM.href);
 
@@ -92,7 +102,7 @@ export const MobileBottomNav = () => {
               </div>
 
               <div className="space-y-4">
-                {NAV_GROUPS.map((group) => (
+                {visibleGroups.map((group) => (
                   <div key={group.id}>
                     <p className="mb-1.5 text-xs font-bold uppercase tracking-[0.14em] text-sand-500">
                       {group.emoji} {group.label}

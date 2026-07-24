@@ -6,8 +6,9 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
   ALL_NAV_ITEMS,
   CHAT_ITEM,
+  getRuntimeNavGroups,
   HOME_ITEM,
-  NAV_GROUPS,
+  isFitnessChallengeAvailableInCurrentRuntime,
   type NavGroupId,
   isGroupActive,
   isNavActive,
@@ -60,6 +61,7 @@ export const Navbar: React.FC<NavbarProps> = ({ username, points, level, badges,
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [openGroup, setOpenGroup] = useState<NavGroupId | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [showFitnessChallenge, setShowFitnessChallenge] = useState(false);
   const pathname = usePathname();
   const reduceMotion = useReducedMotion();
   const desktopNavRef = useRef<HTMLDivElement>(null);
@@ -68,12 +70,20 @@ export const Navbar: React.FC<NavbarProps> = ({ username, points, level, badges,
   const displayPoints = points !== undefined ? points : user?.points;
   const displayLevel = getKidLevelTitle(level || user?.level);
   const displayBadges = badges !== undefined ? badges : user?.badges;
+  const visibleGroups = React.useMemo(
+    () => getRuntimeNavGroups(showFitnessChallenge),
+    [showFitnessChallenge]
+  );
 
   // Close any open menus when the route changes.
   useEffect(() => {
     setIsMenuOpen(false);
     setOpenGroup(null);
   }, [pathname]);
+
+  useEffect(() => {
+    setShowFitnessChallenge(isFitnessChallengeAvailableInCurrentRuntime());
+  }, []);
 
   // Close the desktop dropdown on outside click / Escape.
   useEffect(() => {
@@ -146,7 +156,7 @@ export const Navbar: React.FC<NavbarProps> = ({ username, points, level, badges,
               {HOME_ITEM.label}
             </Link>
 
-            {NAV_GROUPS.map((group) => {
+            {visibleGroups.map((group) => {
               const groupActive = isGroupActive(pathname, group);
               const isOpen = openGroup === group.id;
               return (
@@ -329,7 +339,7 @@ export const Navbar: React.FC<NavbarProps> = ({ username, points, level, badges,
             transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
           >
             <div className="flex flex-col gap-4">
-              {NAV_GROUPS.map((group) => (
+              {visibleGroups.map((group) => (
                 <div key={group.id}>
                   <p className="px-4 pb-1 text-xs font-bold uppercase tracking-[0.14em] text-sand-500">
                     {group.emoji} {group.label}

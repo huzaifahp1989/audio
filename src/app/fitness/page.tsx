@@ -316,10 +316,13 @@ export default function FitnessPage() {
                   <div className="mx-auto mb-3 flex justify-center">
                     <Smartphone className="text-amber-500" size={28} />
                   </div>
-                  <p className="font-bold text-[#1e1b4b]">Open this page in the mobile app</p>
+                  <p className="font-bold text-[#1e1b4b]">Step tracking is app-only</p>
                   <p className="mt-1">
-                    Step counting uses your phone&apos;s built-in motion sensor inside the Kids Zone app.
-                    It does not work in a regular browser tab.
+                    The Fitness Challenge reads steps from your phone&apos;s built-in motion sensor inside
+                    the Kids Zone mobile app. It cannot count steps in a normal browser on desktop or mobile web.
+                  </p>
+                  <p className="mt-2 text-xs font-semibold text-amber-700">
+                    Sign in to the app on your phone and allow motion access to join the challenge.
                   </p>
                 </div>
               )}
